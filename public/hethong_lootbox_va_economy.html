@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Kinh Tế Game - Loot Box & Currency Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .schema-diagram {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .type-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="gradient-bg text-white py-8">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold">Hệ Thống Kinh Tế Game</h1>
+                    <p class="text-xl mt-2">Quản lý Loot Box và Tiền tệ trong Game</p>
+                </div>
+                <div class="bg-white text-blue-800 p-3 rounded-lg shadow-lg">
+                    <i class="fas fa-database text-3xl"></i>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        <!-- Introduction -->
+        <section class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">Giới thiệu Hệ thống</h2>
+            <p class="text-gray-700 mb-4">
+                Hệ thống kinh tế game này được thiết kế để quản lý toàn diện các cơ chế loot box và tiền tệ trong game. 
+                Hệ thống hỗ trợ nhiều loại loot box với các tính năng đa dạng như hệ thống pity, streak bonus, và giới hạn mở rương.
+            </p>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 class="font-bold text-blue-700"><i class="fas fa-box-open mr-2"></i>Loot Boxes</h3>
+                    <p class="text-sm mt-2">Quản lý nhiều loại rương với cơ chế mở và phần thưởng đa dạng</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h3 class="font-bold text-green-700"><i class="fas fa-coins mr-2"></i>Currency System</h3>
+                    <p class="text-sm mt-2">Hệ thống tiền tệ với 15 loại tiền và cơ chế trao đổi linh hoạt</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <h3 class="font-bold text-purple-700"><i class="fas fa-trophy mr-2"></i>Reward Systems</h3>
+                    <p class="text-sm mt-2">Nhiều cơ chế phần thưởng: pity, streak, first-time bonus</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Schema Structure -->
+        <section class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">Cấu trúc Database Schema</h2>
+            
+            <div class="schema-diagram p-6 rounded-lg mb-6">
+                <h3 class="text-xl font-semibold mb-4 text-center">Sơ đồ Các Bảng Chính</h3>
+                <div class="flex flex-wrap justify-center gap-4">
+                    <div class="bg-white p-4 rounded-lg shadow-md w-48">
+                        <h4 class="font-bold text-blue-700 text-center">Loot Boxes</h4>
+                        <div class="text-xs text-center mt-2">Bảng chính quản lý rương</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-md w-48">
+                        <h4 class="font-bold text-green-700 text-center">Reward Tables</h4>
+                        <div class="text-xs text-center mt-2">Bảng phần thưởng</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-md w-48">
+                        <h4 class="font-bold text-purple-700 text-center">Currency Info</h4>
+                        <div class="text-xs text-center mt-2">Thông tin tiền tệ</div>
+                    </div>
+                    <div class="bg-white p-4 rounded-lg shadow-md w-48">
+                        <h4 class="font-bold text-red-700 text-center">Player Data</h4>
+                        <div class="text-xs text-center mt-2">Dữ liệu người chơi</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-300 rounded-lg">
+                    <thead class="bg-blue-600 text-white">
+                        <tr>
+                            <th class="py-3 px-4 text-left">Bảng</th>
+                            <th class="py-3 px-4 text-left">Mô tả</th>
+                            <th class="py-3 px-4 text-left">Chức năng chính</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-200 hover:bg-blue-50">
+                            <td class="py-3 px-4 font-medium">loot_boxes</td>
+                            <td class="py-3 px-4">Thông tin chính về các loại loot box</td>
+                            <td class="py-3 px-4">Lưu trữ metadata, hiệu ứng, thời gian khả dụng</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 hover:bg-blue-50">
+                            <td class="py-3 px-4 font-medium">reward_tables</td>
+                            <td class="py-3 px-4">Bảng phần thưởng cho loot box</td>
+                            <td class="py-3 px-4">Xác định cách phân phối phần thưởng</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 hover:bg-blue-50">
+                            <td class="py-3 px-4 font-medium">reward_items</td>
+                            <td class="py-3 px-4">Các vật phẩm phần thưởng cụ thể</td>
+                            <td class="py-3 px-4">Xác định vật phẩm, tiền tệ, số lượng</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 hover:bg-blue-50">
+                            <td class="py-3 px-4 font-medium">currency_info</td>
+                            <td class="py-3 px-4">Thông tin về các loại tiền tệ</td>
+                            <td class="py-3 px-4">Tỷ giá, hình ảnh, thuộc tính</td>
+                        </tr>
+                        <tr class="border-b border-gray-200 hover:bg-blue-50">
+                            <td class="py-3 px-4 font-medium">player_wallets</td>
+                            <td class="py-3 px-4">Ví tiền của người chơi</td>
+                            <td class="py-3 px-4">Lưu trữ số dư các loại tiền tệ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Loot Box Types -->
+        <section class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">Các Loại Loot Box</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="card-hover bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5">
+                    <div class="flex items-center mb-3">
+                        <div class="bg-blue-500 text-white p-2 rounded-lg mr-3">
+                            <i class="fas fa-box text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-blue-800">Common Box</h3>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-3">Rương thường với phần thưởng cơ bản</p>
+                    <div class="flex flex-wrap gap-1">
+                        <span class="type-badge bg-blue-100 text-blue-800">common</span>
+                        <span class="type-badge bg-gray-100 text-gray-800">basic</span>
+                    </div>
+                </div>
+                
+                <div class="card-hover bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-5">
+                    <div class="flex items-center mb-3">
+                        <div class="bg-purple-500 text-white p-2 rounded-lg mr-3">
+                            <i class="fas fa-gem text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-purple-800">Premium Box</h3>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-3">Rương cao cấp với phần thưởng giá trị</p>
+                    <div class="flex flex-wrap gap-1">
+                        <span class="type-badge bg-purple-100 text-purple-800">premium</span>
+                        <span class="type-badge bg-yellow-100 text-yellow-800">elite</span>
+                    </div>
+                </div>
+                
+                <div class="card-hover bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-5">
+                    <div class="flex items-center mb-3">
+                        <div class="bg-red-500 text-white p-2 rounded-lg mr-3">
+                            <i class="fas fa-calendar-star text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-red-800">Event Box</h3>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-3">Rương sự kiện với thời gian giới hạn</p>
+                    <div class="flex flex-wrap gap-1">
+                        <span class="type-badge bg-red-100 text-red-800">event</span>
+                        <span class="type-badge bg-green-100 text-green-800">seasonal</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Currency System -->
+        <section class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">Hệ Thống Tiền Tệ</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-lg p-4 text-center">
+                    <div class="bg-yellow-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3 class="font-bold text-yellow-700">Gold</h3>
+                    <p class="text-xs text-gray-600 mt-1">Tiền tệ cơ bản</p>
+                    <div class="mt-2 text-sm">Tỷ giá: 1.0</div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-gray-50 to-gray-100 border border-gray-300 rounded-lg p-4 text-center">
+                    <div class="bg-gray-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                    <h3 class="font-bold text-gray-700">Silver</h3>
+                    <p class="text-xs text-gray-600 mt-1">Tiền tệ trung cấp</p>
+                    <div class="mt-2 text-sm">Tỷ giá: 0.1</div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4 text-center">
+                    <div class="bg-blue-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-gem"></i>
+                    </div>
+                    <h3 class="font-bold text-blue-700">Diamond</h3>
+                    <p class="text-xs text-gray-600 mt-1">Tiền tệ cao cấp</p>
+                    <div class="mt-2 text-sm">Tỷ giá: 100.0</div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-lg p-4 text-center">
+                    <div class="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3 class="font-bold text-green-700">Honor</h3>
+                    <p class="text-xs text-gray-600 mt-1">Điểm danh dự PvP</p>
+                    <div class="mt-2 text-sm">Tỷ giá: 5.0</div>
+                </div>
+                
+                <div class="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-lg p-4 text-center">
+                    <div class="bg-purple-500 text-white w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-crystal-ball"></i>
+                    </div>
+                    <h3 class="font-bold text-purple-700">Crystal</h3>
+                    <p class="text-xs text-gray-600 mt-1">Tiền tệ đặc biệt</p>
+                    <div class="mt-2 text-sm">Tỷ giá: 50.0</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Reward Systems -->
+        <section class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">Các Hệ Thống Phần Thưởng</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card-hover bg-gradient-to-br from-red-50 to-red-100 border border-red-200 rounded-xl p-5">
+                    <div class="flex items-center mb-3">
+                        <div class="bg-red-500 text-white p-2 rounded-lg mr-3">
+                            <i class="fas fa-heart text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-red-800">Pity System</h3>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-3">Đảm bảo người chơi nhận được vật phẩm quý sau một số lần mở nhất định</p>
+                    <ul class="text-xs text-gray-600 list-disc pl-5">
+                        <li>Reset khi nhận vật phẩm hiếm</li>
+                        <li>Theo dõi theo độ hiếm</li>
+                        <li>Phần thưởng đảm bảo</li>
+                    </ul>
+                </div>
+                
+                <div class="card-hover bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-5">
+                    <div class="flex items-center mb-3">
+                        <div class="bg-green-500 text-white p-2 rounded-lg mr-3">
+                            <i class="fas fa-fire text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-green-800">Streak Bonus</h3>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-3">Thưởng cho việc mở rương liên tiếp hoặc tổng số lần mở</p>
+                    <ul class="text-xs text-gray-600 list-disc pl-5">
+                        <li>Theo dõi streak liên tiếp</li>
+                        <li>Nhân hệ số phần thưởng</li>
+                        <li>Đảm bảo độ hiếm sau streak</li>
+                    </ul>
+                </div>
+                
+                <div class="card-hover bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-5">
+                    <div class="flex items-center mb-3">
+                        <div class="bg-blue-500 text-white p-2 rounded-lg mr-3">
+                            <i class="fas fa-gift text-lg"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-blue-800">First-time Bonus</h3>
+                    </div>
+                    <p class="text-sm text-gray-700 mb-3">Phần thưởng đặc biệt khi mở rương lần đầu tiên</p>
+                    <ul class="text-xs text-gray-600 list-disc pl-5">
+                        <li>Nhân hệ số phần thưởng</li>
+                        <li>Vật phẩm đặc biệt</li>
+                        <li>Kích thích trải nghiệm mới</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Features -->
+        <section class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-2xl font-bold text-blue-800 mb-4">Tính Năng Kỹ Thuật</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Các Kiểu Dữ Liệu (ENUM)</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">item_type:</span> 
+                                <span class="text-sm text-gray-600">weapon, armor, consumable, currency, cosmetic, loot_box, ...</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">rarity:</span> 
+                                <span class="text-sm text-gray-600">common, uncommon, rare, epic, legendary, mythic, ...</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">currency_type:</span> 
+                                <span class="text-sm text-gray-600">gold, silver, diamond, crystal, honor, alliance_point, ...</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-check text-green-500 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">distribution_type:</span> 
+                                <span class="text-sm text-gray-600">weighted, random, sequential, pity</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3">Tính Năng Hỗ Trợ</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-start">
+                            <i class="fas fa-cog text-blue-500 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">Giới hạn mở rương:</span> 
+                                <span class="text-sm text-gray-600">Theo ngày, tuần, tháng, tài khoản, nhân vật</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-cog text-blue-500 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">Yêu cầu mở rương:</span> 
+                                <span class="text-sm text-gray-600">Cấp độ, VIP, thời gian, quest, achievement</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-cog text-blue-500 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">Hiệu ứng hình ảnh:</span> 
+                                <span class="text-sm text-gray-600">Animation, sound effect, particle effect, glow color</span>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <i class="fas fa-cog text-blue-500 mt-1 mr-2"></i>
+                            <div>
+                                <span class="font-medium">Theo dõi giao dịch:</span> 
+                                <span class="text-sm text-gray-600">Lịch sử mở rương, giao dịch tiền tệ, số dư</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="gradient-bg text-white py-6 mt-8">
+        <div class="container mx-auto px-4 text-center">
+            <p>Hệ Thống Kinh Tế Game - Được thiết kế để quản lý Loot Box và Tiền tệ toàn diện</p>
+            <p class="mt-2 text-blue-200">Sử dụng PostgreSQL với cấu trúc schema tối ưu cho performance</p>
+        </div>
+    </footer>
+</body>
+</html>

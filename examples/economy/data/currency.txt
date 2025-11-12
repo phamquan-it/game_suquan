@@ -1,0 +1,46 @@
+const mockCurrencies: Currency[] = [
+    {
+        id: 'gold',
+        name: 'Vàng',
+        code: 'GOLD',
+        type: 'premium',
+        inCirculation: 4580000000,
+        exchangeRate: 1,
+        inflationRate: 2.1,
+        lastUpdated: '2024-01-15T10:00:00Z',
+        status: 'active'
+    },
+    {
+        id: 'diamond',
+        name: 'Kim Cương',
+        code: 'DIAMOND',
+        type: 'premium',
+        inCirculation: 12500000,
+        exchangeRate: 100,
+        inflationRate: 1.2,
+        lastUpdated: '2024-01-15T10:00:00Z',
+        status: 'active'
+    },
+    {
+        id: 'silver',
+        name: 'Bạc',
+        code: 'SILVER',
+        type: 'basic',
+        inCirculation: 98500000000,
+        exchangeRate: 0.01,
+        inflationRate: 3.5,
+        lastUpdated: '2024-01-15T10:00:00Z',
+        status: 'active'
+    },
+    {
+        id: 'honor',
+        name: 'Điểm Danh Dự',
+        code: 'HONOR',
+        type: 'special',
+        inCirculation: 458000000,
+        exchangeRate: 0,
+        inflationRate: 0.8,
+        lastUpdated: '2024-01-15T10:00:00Z',
+        status: 'active'
+    }
+];

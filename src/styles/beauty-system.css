@@ -1,0 +1,48 @@
+/* styles/beauty-system.css */
+.add-beauty-page {
+    .ant-steps-item-process .ant-steps-item-icon {
+        background: #8b0000;
+        border-color: #8b0000;
+    }
+
+    .ant-steps-item-process .ant-steps-item-title {
+        color: #8b0000;
+        font-weight: 600;
+    }
+
+    .ant-form-item-label > label {
+        font-weight: 500;
+    }
+
+    .ant-card {
+        border-radius: 12px;
+    }
+
+    .ant-upload.ant-upload-select-picture-card {
+        border: 2px dashed #d4af37;
+        border-radius: 8px;
+
+        &:hover {
+            border-color: #8b0000;
+        }
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .add-beauty-page {
+        .ant-steps-horizontal.ant-steps-label-horizontal {
+            .ant-steps-item-title {
+                font-size: 12px;
+            }
+
+            .ant-steps-item-description {
+                display: none;
+            }
+        }
+
+        .ant-form-item-label > label {
+            font-size: 14px;
+        }
+    }
+}

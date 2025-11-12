@@ -1,0 +1,55 @@
+lib/
+├── types/
+│   ├── loot-box.ts            # Core loot box types
+│   ├── reward-system.ts       # Reward distribution
+│   ├── probability.ts         # Probability system
+│   └── index.ts
+├── constants/
+│   ├── loot-box-types.ts      # Box type definitions
+│   ├── reward-tables.ts       # Reward configurations
+│   ├── probability-rules.ts   # Drop rate rules
+│   └── index.ts
+├── utils/
+│   ├── loot-generator.ts      # Reward generation
+│   ├── probability-calc.ts    # Probability calculations
+│   ├── box-opener.ts          # Box opening logic
+│   └── index.ts
+└── hooks/
+    ├── use-loot-boxes.ts      # Main loot box hook
+    ├── use-box-opening.ts     # Box opening operations
+    ├── use-reward-history.ts  # Reward tracking
+    └── index.ts
+
+components/
+├── loot-boxes/
+│   ├── LootBoxCard.tsx        # Box display card
+│   ├── LootBoxGrid.tsx        # Box collection grid
+│   ├── BoxOpeningModal.tsx    # Opening animation modal
+│   ├── RewardDisplay.tsx      # Reward result display
+│   ├── BoxInventory.tsx       # Player's box inventory
+│   └── BoxShop.tsx            # Box purchase interface
+├── rewards/
+│   ├── RewardCard.tsx         # Individual reward item
+│   ├── RewardAnimation.tsx    # Reward reveal animation
+│   ├── RewardHistory.tsx      # Opening history
+│   └── MultiOpenPanel.tsx     # Bulk opening interface
+└── admin/
+    ├── LootBoxManager.tsx     # Admin box management
+    ├── RewardTableEditor.tsx  # Reward configuration
+    ├── ProbabilityTester.tsx  # Drop rate testing
+    └── BoxAnalytics.tsx       # Opening statistics
+
+app/(admin)/loot-boxes/
+├── page.tsx                   # Main loot box management
+├── create/
+│   └── page.tsx              # Create new loot box
+├── [id]/
+│   ├── page.tsx              # Box detail & edit
+│   └── rewards/
+│       └── page.tsx          # Reward table management
+├── categories/
+│   └── page.tsx              # Box categories
+├── opening-history/
+│   └── page.tsx              # Global opening history
+└── analytics/
+    └── page.tsx              # Box performance analytics

@@ -1,26 +1,210 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+    --background: #ffffff;
+    --foreground: #171717;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+    :root {
+        --background: #0a0a0a;
+        --foreground: #ededed;
+    }
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+    background: var(--background);
+    color: var(--foreground);
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+/* styles/globals.css */
+:root {
+    /* Màu chủ đạo - Hoàng gia Việt Nam */
+    --imperial-red: #8b0000;
+    --imperial-gold: #d4af37;
+    --royal-navy: #003366;
+    --noble-brown: #8b4513;
+
+    /* Màu phụ trợ */
+    --ivory: #f5f5dc;
+    --parchment: #f1e8d6;
+    --bronze: #cd7f32;
+    --jade: #00a86b;
+    --silver: #c0c0c0;
+
+    /* Màu trạng thái */
+    --success: #2e8b57;
+    --warning: #ff8c00;
+    --danger: #dc143c;
+    --info: #1e90ff;
+}
+
+/* Custom gradient backgrounds */
+.royal-gradient {
+    background: linear-gradient(
+        135deg,
+        var(--imperial-red),
+        var(--imperial-gold)
+    );
+}
+
+.noble-gradient {
+    background: linear-gradient(
+        135deg,
+        var(--royal-navy),
+        var(--imperial-gold)
+    );
+}
+
+.army-gradient {
+    background: linear-gradient(
+        135deg,
+        rgba(139, 69, 19, 0.8),
+        rgba(212, 175, 55, 0.6)
+    );
+}
+
+/* Custom components */
+.royal-card {
+    border: 2px solid var(--imperial-gold);
+    background: var(--ivory);
+    box-shadow: 0 4px 12px rgba(139, 69, 19, 0.15);
+}
+
+.battle-card {
+    background: var(--royal-navy);
+    color: white;
+    border: 1px solid var(--imperial-gold);
+}
+
+.unit-card {
+    background: var(--parchment);
+    border: 1px solid var(--bronze);
+    transition: all 0.3s ease;
+}
+
+.unit-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(139, 69, 19, 0.2);
+}
+
+/* Custom badges */
+.badge-royal {
+    background: var(--imperial-gold);
+    color: var(--imperial-red);
+    font-weight: bold;
+}
+
+.badge-noble {
+    background: var(--royal-navy);
+    color: var(--imperial-gold);
+}
+
+/* Combat log styles */
+.combat-log {
+    background: rgba(0, 51, 102, 0.9);
+    color: white;
+    border-left: 3px solid var(--imperial-gold);
+}
+
+.ant-checkbox-checked .ant-checkbox-inner {
+    background-color: #8b4513 !important;
+    border-color: #cd7f32 !important;
+}
+
+.ant-checkbox-checked .ant-checkbox-inner:hover {
+    border-color: #cd7f32 !important;
+}
+
+/* Thêm vào file CSS global của bạn */
+.beauty-management-table {
+    .ant-table-thead > tr > th {
+        background: linear-gradient(135deg, #8b0000 0%, #a52a2a 100%);
+        color: white;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .ant-table-tbody > tr:hover > td {
+        background-color: #f1e8d6 !important;
+    }
+
+    .ant-table-tbody > tr > td {
+        border-bottom: 1px solid #f1e8d6;
+        vertical-align: top;
+    }
+
+    .ant-progress-circle-path {
+        stroke-linecap: round;
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .beauty-management-table {
+        .ant-table-thead > tr > th {
+            font-size: 12px;
+            padding: 8px 4px;
+        }
+
+        .ant-table-tbody > tr > td {
+            font-size: 12px;
+            padding: 8px 4px;
+        }
+    }
+}
+
+/* Tailwind CSS Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Styles */
+.imperial-border {
+  border: 2px solid #D4AF37;
+}
+
+.parchment-bg {
+  background-color: #F1E8D6;
+  background-image:
+    radial-gradient(#CD7F32 1px, transparent 1px),
+    radial-gradient(#CD7F32 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+.noble-text {
+  color: #8B4513;
+  font-family: 'Cinzel', 'Times New Roman', serif;
+}
+
+.imperial-glow {
+  box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseGold {
+  0%, 100% { box-shadow: 0 0 5px rgba(212, 175, 55, 0.5); }
+  50% { box-shadow: 0 0 20px rgba(212, 175, 55, 0.8); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.animate-pulse-gold {
+  animation: pulseGold 2s infinite;
 }

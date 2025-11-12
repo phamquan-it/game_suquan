@@ -1,0 +1,45 @@
+/* styles/notifications.css */
+.notification-trigger:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.notification-item:hover {
+    background-color: #F5F5F5 !important;
+    transform: translateX(2px);
+}
+
+/* Custom scrollbar for notification panel */
+.ant-popover-inner-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.ant-popover-inner-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.ant-popover-inner-content::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.ant-popover-inner-content::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+/* Animation for new notifications */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 79, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(255, 77, 79, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 79, 0);
+    }
+}
+
+.ant-badge-dot {
+    animation: pulse 2s infinite;
+}

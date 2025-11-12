@@ -1,0 +1,175 @@
+/* styles/gameplay.css */
+/* Feature card animations */
+.feature-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.1), transparent);
+  transition: left 0.5s;
+}
+
+.feature-card:hover::before {
+  left: 100%;
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(139, 0, 0, 0.15);
+}
+
+/* Guide card hover effects */
+.guide-card {
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.guide-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 30px rgba(139, 0, 0, 0.2);
+}
+
+.guide-card::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: linear-gradient(90deg, #8B0000, #D4AF37, #003366);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.guide-card:hover::after {
+  opacity: 1;
+}
+
+/* Progression steps customization */
+.progression-steps .ant-steps-item-icon {
+  border: 2px solid #D4AF37 !important;
+}
+
+.progression-steps .ant-steps-item-process .ant-steps-item-icon {
+  background: #8B0000 !important;
+  border-color: #8B0000 !important;
+}
+
+.progression-steps .ant-steps-item-finish .ant-steps-item-icon {
+  background: #2E8B57 !important;
+  border-color: #2E8B57 !important;
+}
+
+/* Tabs custom styling */
+.gameplay-tabs .ant-tabs-ink-bar {
+  background: linear-gradient(90deg, #8B0000, #D4AF37) !important;
+  height: 3px !important;
+}
+
+.gameplay-tabs .ant-tabs-tab:hover {
+  color: #8B0000 !important;
+}
+
+.gameplay-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #8B0000 !important;
+  font-weight: 600;
+}
+
+/* Timeline customizations */
+.strategy-timeline .ant-timeline-item-head {
+  background-color: transparent !important;
+  border-color: #D4AF37 !important;
+}
+
+.strategy-timeline .ant-timeline-item-content {
+  background: white;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #F1E8D6;
+}
+
+/* Collapse panel styling */
+.tactics-collapse .ant-collapse-header {
+  background: linear-gradient(135deg, #F5F5DC, #F1E8D6) !important;
+  border-radius: 6px !important;
+  border: 1px solid #D4AF37 !important;
+}
+
+.tactics-collapse .ant-collapse-content {
+  border: 1px solid #D4AF37 !important;
+  border-top: none !important;
+  border-radius: 0 0 6px 6px !important;
+}
+
+/* Progress bar animations */
+.guide-progress .ant-progress-bg {
+  transition: all 1.5s ease-in-out !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .gameplay-hero-title {
+    font-size: 2rem !important;
+  }
+  
+  .feature-tabs {
+    margin: 0 -16px;
+  }
+  
+  .progression-steps {
+    padding: 0 16px;
+  }
+}
+
+/* Loading animations */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gameplay-section {
+  animation: slideInUp 0.6s ease-out;
+}
+
+/* Statistic card glow */
+.stat-card {
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 20px rgba(212, 175, 55, 0.3);
+  transform: scale(1.02);
+}
+
+/* Military theme decorations */
+.military-border {
+  border: 2px solid #8B0000;
+  border-radius: 8px;
+  position: relative;
+}
+
+.military-border::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  border: 1px solid #D4AF37;
+  border-radius: 10px;
+  pointer-events: none;
+}

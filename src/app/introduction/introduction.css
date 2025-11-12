@@ -1,0 +1,130 @@
+/* styles/introduction.css */
+/* Hero section animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.hero-content {
+    animation: fadeInUp 1s ease-out;
+}
+
+/* Timeline custom styles */
+.ant-timeline-item-tail {
+    border-left: 2px solid #d4af37 !important;
+}
+
+.ant-timeline-item-head {
+    background-color: #8b0000 !important;
+    border-color: #d4af37 !important;
+}
+
+/* Character card hover effects */
+.character-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.character-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(212, 175, 55, 0.2),
+        transparent
+    );
+    transition: left 0.5s;
+}
+
+.character-card:hover::before {
+    left: 100%;
+}
+
+.character-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(139, 0, 0, 0.3);
+}
+
+/* Feature carousel indicators */
+.carousel-indicator {
+    transition: all 0.3s ease;
+}
+
+.carousel-indicator.active {
+    transform: scale(1.2);
+}
+
+/* Historical period badges */
+.period-badge {
+    background: linear-gradient(135deg, var(--period-color), #d4af37);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Progress bar animations */
+.ant-progress-bg {
+    transition: all 1s ease-in-out !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-title {
+        font-size: 2.5rem !important;
+    }
+
+    .timeline-alternate {
+        margin-left: 0 !important;
+    }
+
+    .character-stats {
+        text-align: center;
+    }
+}
+
+/* Scroll animations */
+.fade-in-section {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+        opacity 0.6s ease,
+        transform 0.6s ease;
+}
+
+.fade-in-section.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Royal decorative elements */
+.royal-border {
+    border: 2px solid #d4af37;
+    border-radius: 12px;
+    position: relative;
+}
+
+.royal-border::after {
+    content: "";
+    position: absolute;
+    top: -3px;
+    left: -3px;
+    right: -3px;
+    bottom: -3px;
+    border: 1px solid #8b0000;
+    border-radius: 14px;
+    pointer-events: none;
+}

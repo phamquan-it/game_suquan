@@ -1,0 +1,157 @@
+/* styles/story.css */
+/* Story timeline animations */
+.story-chapter-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+}
+
+.story-chapter-card:hover {
+    border-left-color: #d4af37;
+    transform: translateX(8px);
+}
+
+.story-chapter-card.active {
+    border-left-color: #8b0000;
+    background: linear-gradient(90deg, rgba(139, 0, 0, 0.1), transparent);
+}
+
+/* Character hover effects */
+.character-card {
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.character-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(139, 0, 0, 0.2);
+}
+
+.character-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px solid #d4af37;
+    border-radius: 8px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.character-card:hover::before {
+    opacity: 1;
+}
+
+/* Historical location markers */
+.location-marker {
+    position: relative;
+    padding-left: 20px;
+}
+
+.location-marker::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d4af37;
+}
+
+/* Progress bar animations */
+.ant-progress-bg {
+    transition: all 1.5s ease-in-out !important;
+}
+
+/* Step connector customization */
+.ant-steps-item-tail::after {
+    background-color: #d4af37 !important;
+}
+
+.ant-steps-item-title {
+    color: #8b0000 !important;
+    font-weight: 600 !important;
+}
+
+/* Quote styling */
+.historical-quote {
+    background: linear-gradient(135deg, #f5f5dc, #f1e8d6);
+    border-left: 4px solid #d4af37;
+    padding: 16px;
+    margin: 16px 0;
+    font-style: italic;
+    position: relative;
+}
+
+.historical-quote::before {
+    content: '"';
+    font-size: 3rem;
+    color: #d4af37;
+    position: absolute;
+    left: 10px;
+    top: -10px;
+    opacity: 0.3;
+}
+
+/* Timeline customization */
+.ant-timeline-item-content {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    border: 1px solid #d4af37;
+    margin-bottom: 16px;
+}
+
+.ant-timeline-item-head {
+    background-color: #8b0000 !important;
+    border-color: #d4af37 !important;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .story-hero-title {
+        font-size: 2rem !important;
+    }
+
+    .character-stats {
+        text-align: center;
+    }
+
+    .timeline-vertical {
+        padding-left: 20px !important;
+    }
+}
+
+/* Scroll animations for story elements */
+.story-element {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: all 0.6s ease;
+}
+
+.story-element.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Decorative elements */
+.royal-divider {
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #d4af37, transparent);
+    margin: 32px 0;
+}
+
+.chapter-badge {
+    background: linear-gradient(135deg, #8b0000, #d4af37);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: bold;
+    display: inline-block;
+    margin-bottom: 8px;
+}
