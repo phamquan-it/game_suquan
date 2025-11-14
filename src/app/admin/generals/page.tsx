@@ -40,6 +40,7 @@ import { General } from '@/lib/types/hero.types';
 import { ShipIcon } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/utils/supabase/client';
+import CreateGeneralButton from '@/components/CreateGeneralButton';
 
 const { Option } = Select;
 
@@ -471,12 +472,7 @@ export default function GeneralsManagementPage() {
                                         Xóa Đã Chọn ({selectedRowKeys.length})
                                     </Button>
                                 )}
-                                <Button
-                                    type="primary"
-                                    icon={<PlusOutlined />}
-                                >
-                                    Thêm Tướng
-                                </Button>
+                                <CreateGeneralButton />
                                 <Button
                                     icon={<ExportOutlined />}
                                 >

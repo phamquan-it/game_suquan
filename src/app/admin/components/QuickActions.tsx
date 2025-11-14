@@ -1,5 +1,7 @@
+'use client'; // if you're in Next.js 13+ with App Router
+
 import React from 'react';
-import { Card, Row, Col, Button, Space } from 'antd';
+import { Card, Row, Col, Button } from 'antd';
 import {
     UserAddOutlined,
     TeamOutlined,
@@ -8,47 +10,20 @@ import {
     SecurityScanOutlined,
     DatabaseOutlined
 } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 
 const quickActions = [
-    {
-        title: 'Thêm Người Chơi',
-        icon: <UserAddOutlined />,
-        color: '#8B0000',
-        onClick: () => console.log('Add player'),
-    },
-    {
-        title: 'Quản Lý Liên Minh',
-        icon: <TeamOutlined />,
-        color: '#003366',
-        onClick: () => console.log('Manage alliances'),
-    },
-    {
-        title: 'Gửi Quà Tặng',
-        icon: <GiftOutlined />,
-        color: '#D4AF37',
-        onClick: () => console.log('Send gifts'),
-    },
-    {
-        title: 'Thông Báo',
-        icon: <NotificationOutlined />,
-        color: '#2E8B57',
-        onClick: () => console.log('Send notification'),
-    },
-    {
-        title: 'Kiểm Tra Bảo Mật',
-        icon: <SecurityScanOutlined />,
-        color: '#DC143C',
-        onClick: () => console.log('Security check'),
-    },
-    {
-        title: 'Sao Lưu Dữ Liệu',
-        icon: <DatabaseOutlined />,
-        color: '#8B4513',
-        onClick: () => console.log('Backup data'),
-    },
+    { key: '/players', title: 'Thêm Người Chơi', icon: <UserAddOutlined />, color: '#8B0000' },
+    { key: '/alliances', title: 'Quản Lý Liên Minh', icon: <TeamOutlined />, color: '#003366' },
+    { key: '/gifts', title: 'Gửi Quà Tặng', icon: <GiftOutlined />, color: '#D4AF37' },
+    { key: '/notifications', title: 'Thông Báo', icon: <NotificationOutlined />, color: '#2E8B57' },
+    { key: '/security', title: 'Kiểm Tra Bảo Mật', icon: <SecurityScanOutlined />, color: '#DC143C' },
+    { key: '/backup', title: 'Sao Lưu Dữ Liệu', icon: <DatabaseOutlined />, color: '#8B4513', onClick: () => console.log('Backup data') },
 ];
 
 export default function QuickActions() {
+    const router = useRouter();
+
     return (
         <Card title="Hành Động Nhanh" variant="borderless">
             <Row gutter={[16, 16]}>
@@ -57,7 +32,7 @@ export default function QuickActions() {
                         <Button
                             type="default"
                             icon={action.icon}
-                            onClick={action.onClick}
+                            onClick={() => action.onClick ? action.onClick() : router.push("/admin/"+action.key)}
                             style={{
                                 width: '100%',
                                 height: 80,
@@ -77,3 +52,4 @@ export default function QuickActions() {
         </Card>
     );
 }
+

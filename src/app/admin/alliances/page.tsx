@@ -8,6 +8,7 @@ import { Alliance } from '@/types/alliance'; // Updated import path
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { allianceService } from '@/lib/hooks/useAlliances';
 import { useAllianceMetrics } from '@/lib/hooks/useAllianceAnalysis';
+import AllianceFormModal from '@/components/AllianceFormModal';
 
 const { Title } = Typography;
 
@@ -150,7 +151,7 @@ export default function AlliancesPage() {
             <Title level={2} style={{ color: '#8B0000', marginBottom: 24 }}>
                 Quản Lý Liên Minh
             </Title>
-
+            <AllianceFormModal />
             <Row gutter={[16, 16]}>
                 {/* Metrics Overview */}
                 <Col xs={24}>
