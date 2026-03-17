@@ -1,4 +1,4 @@
-## 🧠 BattlePhaseManager
+## BattlePhaseManager
 
 ### 🎯 Mục đích
 Quản lý trạng thái vòng battle:
