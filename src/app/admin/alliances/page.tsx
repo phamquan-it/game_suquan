@@ -7,7 +7,6 @@ import AllianceMetrics from './components/AllianceMetrics';
 import { Alliance } from '@/types/alliance'; // Updated import path
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { allianceService } from '@/lib/hooks/useAlliances';
-import { useAllianceMetrics } from '@/lib/hooks/useAllianceAnalysis';
 
 const { Title } = Typography;
 
@@ -79,35 +78,6 @@ export default function AlliancesPage() {
 
     const handleBulkAction = async (action: string, allianceIds: string[]) => {
         bulkActionMutation.mutate({ action, allianceIds });
-    };
-
-    // Calculate metrics from the actual data
-    const calculateMetrics = () => {
-        const alliances = alliancesData?.data || [];
-
-        if (alliances.length === 0) {
-            return {
-                totalAlliances: 0,
-                activeAlliances: 0,
-                totalMembers: 0,
-                totalPower: 0,
-                avgWinRate: 0,
-            };
-        }
-
-        const totalAlliances = alliances.length;
-        const activeAlliances = 0;
-        const totalMembers = 0;
-        const totalPower = 0;
-        const avgWinRate = 0;
-
-        return {
-            totalAlliances,
-            activeAlliances,
-            totalMembers,
-            totalPower,
-            avgWinRate,
-        };
     };
 
     const getActionText = (action: string): string => {

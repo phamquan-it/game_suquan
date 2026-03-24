@@ -1,0 +1,50 @@
+.quest-table .ant-table-thead > tr > th {
+  background-color: #003366;
+  color: white;
+  font-weight: 600;
+}
+
+.quest-table .ant-table-tbody > tr:hover > td {
+  background-color: #F1E8D6 !important;
+}
+
+.quest-tabs .ant-tabs-nav {
+  margin-bottom: 24px;
+}
+
+.quest-tabs .ant-tabs-tab {
+  font-family: 'Cinzel', serif;
+  font-weight: 500;
+}
+
+.quest-tabs .ant-tabs-tab-active {
+  font-weight: 600;
+}
+
+/* Custom button styles */
+.bg-imperialRed {
+  background-color: #8B0000;
+}
+
+.bg-imperialRed:hover {
+  background-color: #660000;
+}
+
+.text-imperialRed {
+  color: #8B0000;
+}
+
+.text-nobleBrown {
+  color: #8B4513;
+}
+
+/* Card hover effects */
+.hover\:shadow-lg:hover {
+  box-shadow: 0 4px 16px rgba(139, 69, 19, 0.15);
+  transition: box-shadow 0.3s ease;
+}
+
+/* Font family */
+.font-cinzel {
+  font-family: 'Cinzel', 'Times New Roman', serif;
+}

@@ -23,7 +23,8 @@ const eslintConfig = [
     {
         files: ["**/*.ts", "**/*.tsx"],
         rules: {
-            "@typescript-eslint/no-explicit-any": "off", // Cho phép any
+            "@typescript-eslint/no-explicit-any": "off", // Cho phép any,
+            "@typescript-eslint/no-empty-object-type": "off"
         },
     },
 ];

@@ -13,7 +13,17 @@ import {
     TrophyOutlined,
     GiftOutlined,
     SmileOutlined,
-    IdcardOutlined
+    IdcardOutlined,
+    BuildOutlined,
+    ShoppingOutlined,
+    SkinOutlined,
+    FileTextOutlined,
+    HistoryOutlined,
+    TagOutlined,
+    ShopOutlined,
+    AccountBookOutlined,
+    BarChartOutlined,
+    CommentOutlined
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -38,7 +48,7 @@ const menuItems = [
         icon: <TeamOutlined />,
         label: 'Liên Minh',
     },
-       {
+    {
         key: '/admin/generals',
         icon: <CrownOutlined />,
         label: 'Danh Tướng',
@@ -49,29 +59,93 @@ const menuItems = [
         label: 'Mỹ Nhân',
     },
     {
+        key: '/admin/units',
+        icon: <FireOutlined />,
+        label: 'Quân Đội',
+    },
+    {
         key: '/admin/battles',
         icon: <FireOutlined />,
         label: 'Chiến Trường',
     },
     {
-        key: '/admin/quests/daily',
-        icon: <FireOutlined />,
-        label: 'Nhiệm vụ Hằng Ngày',
+        key: '/admin/quests',
+        icon: <FileTextOutlined />,
+        label: 'Nhiệm Vụ',
+        children: [
+            {
+                key: '/admin/quests/daily',
+                icon: <HistoryOutlined />,
+                label: 'Hằng Ngày',
+            },
+            {
+                key: '/admin/quests/main',
+                icon: <CrownOutlined />,
+                label: 'Chính Tuyến',
+            },
+            {
+                key: '/admin/quests/event',
+                icon: <GiftOutlined />,
+                label: 'Sự Kiện',
+            },
+        ],
     },
     {
-        key: '/admin/loot-boxes',
+        key: '/admin/lootboxes',
         icon: <GiftOutlined />,
         label: 'Rương & Vật Phẩm',
+    },
+    {
+        key: '/admin/base_items',
+        icon: <SkinOutlined />,
+        label: 'Vật Phẩm Cơ Bản',
     },
     {
         key: '/admin/economy',
         icon: <DollarOutlined />,
         label: 'Kinh Tế',
+        children: [
+            {
+                key: '/admin/economy/shop-items',
+                icon: <ShopOutlined />,
+                label: 'Cửa Hàng',
+            },
+            {
+                key: '/admin/economy/currencies',
+                icon: <AccountBookOutlined />,
+                label: 'Tiền Tệ',
+            },
+            {
+                key: '/admin/economy/market',
+                icon: <ShoppingOutlined />,
+                label: 'Chợ',
+            },
+            {
+                key: '/admin/economy/transactions',
+                icon: <BarChartOutlined />,
+                label: 'Giao Dịch',
+            },
+        ],
     },
     {
         key: '/admin/achievements',
         icon: <TrophyOutlined />,
         label: 'Thành Tựu',
+    },
+    {
+        key: '/admin/building',
+        icon: <BuildOutlined />,
+        label: 'Xây Dựng',
+    },
+    {
+        key: '/admin/chat',
+        icon: <CommentOutlined />,
+        label: 'Chat & Tin Nhắn',
+    },
+    {
+        key: '/admin/regions',
+        icon: <TagOutlined />,
+        label: 'Khu Vực',
     },
     {
         key: '/admin/system',
@@ -88,18 +162,44 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
     const router = useRouter();
     const pathname = usePathname();
 
+    // Find the parent key for nested routes to highlight the correct menu item
+    const getSelectedKeys = () => {
+        const parentKey = menuItems.find(item => 
+            item.children?.some(child => child.key === pathname)
+        )?.key;
+        return parentKey ? [parentKey] : [pathname];
+    };
+
+    const getOpenKeys = () => {
+        const parentKey = menuItems.find(item => 
+            item.children?.some(child => child.key === pathname)
+        )?.key;
+        return parentKey ? [parentKey] : [];
+    };
+
     return (
-        <div style={{ padding: '16px 0' }}>
+        <div style={{ padding: '16px 0', height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Logo */}
             <div style={{
                 padding: '16px',
                 textAlign: 'center',
-                borderBottom: '1px solid rgba(255,255,255,0.1)',
-                marginBottom: 16
+                borderBottom: '1px solid rgba(212, 175, 55, 0.3)',
+                marginBottom: 16,
+                background: 'linear-gradient(135deg, #8B0000 0%, #660000 100%)',
+                borderRadius: '8px',
+                margin: '0 16px 16px 16px',
+                boxShadow: '0 4px 12px rgba(139, 0, 0, 0.3)'
             }}>
                 <CrownOutlined style={{ fontSize: 32, color: '#D4AF37' }} />
                 {!collapsed && (
-                    <div style={{ color: 'white', marginTop: 8, fontWeight: 'bold' }}>
+                    <div style={{ 
+                        color: '#F5F5DC', 
+                        marginTop: 8, 
+                        fontWeight: 'bold',
+                        fontSize: 14,
+                        textTransform: 'uppercase',
+                        letterSpacing: '1px'
+                    }}>
                         12 SỨ QUÂN
                     </div>
                 )}
@@ -107,15 +207,34 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
 
             <Menu
                 theme="dark"
-                selectedKeys={[pathname]}
+                selectedKeys={getSelectedKeys()}
+                defaultOpenKeys={getOpenKeys()}
                 mode="inline"
                 items={menuItems}
                 onClick={({ key }) => router.push(key)}
                 style={{
                     background: 'transparent',
-                    border: 'none'
+                    border: 'none',
+                    flex: 1,
+                    overflowY: 'auto',
+                    overflowX: 'hidden'
                 }}
             />
+
+            {/* Version info */}
+            {!collapsed && (
+                <div style={{
+                    padding: '16px',
+                    textAlign: 'center',
+                    borderTop: '1px solid rgba(212, 175, 55, 0.2)',
+                    color: '#CD7F32',
+                    fontSize: 12,
+                    marginTop: 'auto'
+                }}>
+                    <div>Admin Panel v1.0.0</div>
+                    <div style={{ color: '#D4AF37', marginTop: 4 }}>Imperial Edition</div>
+                </div>
+            )}
         </div>
     );
 }

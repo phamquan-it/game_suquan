@@ -1,74 +1,171 @@
-// app/(admin)/achievements/page.tsx
+// app/admin/achievements/page.tsx
 'use client';
 
 import React, { useState } from 'react';
-import { Layout } from 'antd';
-import { AchievementList } from '@/components/admin/achievements/AchievementList';
-import { AchievementDetail } from '@/components/admin/achievements/AchievementDetail';
-import { CreateAchievementForm } from '@/components/admin/achievements/CreateAchievementForm';
-import { Achievement } from '@/lib/types/achievements/achievement';
-import { supabase } from '@/utils/supabase/client';
-import { useQuery } from '@tanstack/react-query';
+import {
+    Layout,
+    Typography,
+    Button,
+    Space,
+    Modal,
+    message
+} from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
+import { AchievementList } from './components/AchievementList';
+import { AchievementStatsComponent } from './components/AchievementStats';
+import { AchievementFiltersComponent } from './components/AchievementFilters';
+import { AchievementForm } from './components/AchievementForm';
+import { useAchievements } from './hooks/useAchievements';
+import { useAchievement } from './hooks/useAchievement';
+import { Achievement, AchievementFormData } from './types';
 
-const AchievementsPage: React.FC = () => {
-    const [selectedAchievement, setSelectedAchievement] = useState<Achievement | null>(null);
-    const [detailVisible, setDetailVisible] = useState(false);
-    const [createVisible, setCreateVisible] = useState(false);
-    const { data } = useQuery({
-        queryKey: ["v_achievements_full"],
-        queryFn: async (): Promise<Achievement[]> => {
-            const { data, error } = await supabase
-                .from("v_achievements_full") // ← view name
-                .select("*");
+const { Header, Content } = Layout;
+const { Title } = Typography;
 
-            if (error) throw new Error(error.message);
-            return data as Achievement[];
-        },
-        staleTime: 1000 * 60,
-    });
-    const handleView = (achievement: Achievement) => {
-        setSelectedAchievement(achievement);
-        setDetailVisible(true);
-    };
+export default function AchievementsPage() {
+    const [modalVisible, setModalVisible] = useState(false);
+    const [editingAchievement, setEditingAchievement] = useState<Achievement | undefined>();
 
-    const handleEdit = (achievement: Achievement) => {
-        // Navigate to edit page or open edit modal
-        console.log('Edit achievement:', achievement);
+    const {
+        achievements,
+        loading,
+        filters,
+        setFilters,
+        stats,
+        deleteAchievement,
+        updateStatus,
+        refresh,
+    } = useAchievements();
+
+    const {
+        saving,
+        createAchievement,
+        updateAchievement,
+    } = useAchievement();
+
+    const handleEdit = (id: string) => {
+        const achievement = achievements.find(a => a.id === id);
+        setEditingAchievement(achievement);
+        setModalVisible(true);
     };
 
     const handleCreate = () => {
-        setCreateVisible(true);
+        setEditingAchievement(undefined);
+        setModalVisible(true);
+    };
+
+    const handleDuplicate = (achievement: Achievement) => {
+        const { id, created_at, updated_at, completion_rate, average_time, first_completion, total_completions, ...duplicateData } = achievement;
+        setEditingAchievement({
+            ...duplicateData,
+            id: `${achievement.id}_copy`,
+            name: `${achievement.name} (Copy)`,
+        } as Achievement);
+        setModalVisible(true);
+    };
+
+    const handleSave = async (values: AchievementFormData) => {
+        try {
+            if (editingAchievement) {
+                await updateAchievement(editingAchievement.id, values);
+            } else {
+                await createAchievement(values);
+            }
+            setModalVisible(false);
+            refresh();
+        } catch (error) {
+            message.error('Failed to save achievement');
+        }
+    };
+
+    const resetFilters = () => {
+        setFilters({
+            search: '',
+            type: [],
+            category: [],
+            tier: [],
+            rarity: [],
+            difficulty: [],
+            status: [],
+            repeatable: null,
+        });
     };
 
     return (
-        <Layout.Content style={{ padding: '24px' }}>
-            <AchievementList
-                achievements={data ?? []}
-                onView={handleView}
-                onEdit={handleEdit}
-                onCreate={handleCreate}
-            />
+        <Layout className="min-h-screen bg-ivory">
+            <Header className="bg-imperialRed text-white flex items-center px-6">
+                <Title level={3} className="text-white !mb-0 !text-white">
+                    Achievement Management
+                </Title>
+            </Header>
 
-            {/* Achievement Detail Modal */}
-            {selectedAchievement && (
-                <AchievementDetail
-                    achievement={selectedAchievement}
-                    visible={detailVisible}
-                    onClose={() => setDetailVisible(false)}
-                />
-            )}
+            <Content className="p-6">
+                <Space direction="vertical" size="large" className="w-full">
+                    {/* Stats Section */}
+                    <AchievementStatsComponent stats={stats} />
 
-            {/* Create Achievement Modal */}
-            <CreateAchievementForm
-                visible={createVisible}
-                onClose={() => setCreateVisible(false)}
-                onSave={(achievement: any) => {
-                    console.log('Save achievement:', achievement);
-                    setCreateVisible(false);
-                }}
-            />
-        </Layout.Content>
+                    {/* Filters Section */}
+                    <AchievementFiltersComponent
+                        filters={filters}
+                        onFilterChange={setFilters}
+                        onReset={resetFilters}
+                    />
+
+                    {/* Actions Section */}
+                    <div className="flex justify-between items-center">
+                        <Title level={4} className="!mb-0">
+                            Achievements List ({achievements.length})
+                        </Title>
+                        <Button
+                            type="primary"
+                            icon={<PlusOutlined />}
+                            onClick={handleCreate}
+                            size="large"
+                        >
+                            Create Achievement
+                        </Button>
+                    </div>
+
+                    {/* Achievements Table */}
+                    <AchievementList
+                        achievements={achievements}
+                        loading={loading}
+                        onEdit={handleEdit}
+                        onDelete={deleteAchievement}
+                        onStatusChange={updateStatus}
+                        onDuplicate={handleDuplicate}
+                    />
+                </Space>
+            </Content>
+            {/* Create/Edit Modal */}
+            <Modal
+                title={editingAchievement ? 'Edit Achievement' : 'Create Achievement'}
+                open={modalVisible}
+                onCancel={() => setModalVisible(false)}
+                footer={null}
+                width={800}
+                destroyOnClose
+            >
+                {/* CREATE */}
+                {!editingAchievement && (
+                    <AchievementForm
+                        onSave={handleSave}
+                        onCancel={() => setModalVisible(false)}
+                        saving={saving}
+                    />
+                )}
+
+                {/* EDIT */}
+                {editingAchievement && (
+                    <AchievementForm
+                        key={editingAchievement.id} // 🔑 cực kỳ quan trọng
+                        initialValues={editingAchievement}
+                        onSave={handleSave}
+                        onCancel={() => setModalVisible(false)}
+                        saving={saving}
+                    />
+                )}
+            </Modal>
+        </Layout>
     );
-};
-
-export default AchievementsPage;
+}

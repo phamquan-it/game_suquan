@@ -167,7 +167,7 @@ export default function CreatePlayerModal({
             width={800}
             footer={null}
             centered
-            destroyOnClose
+            destroyOnHidden
         >
             <Form
                 form={form}
