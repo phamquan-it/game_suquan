@@ -22,9 +22,9 @@ import {
   Alert,
   Spin,
 } from 'antd';
-import { 
-  SaveOutlined, 
-  ArrowLeftOutlined, 
+import {
+  SaveOutlined,
+  ArrowLeftOutlined,
   PlusOutlined,
   InfoCircleOutlined,
   GiftOutlined,
@@ -66,7 +66,7 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
   const [tags, setTags] = useState<string[]>([]);
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
-  
+
   const { data: lootBox, isLoading: isLoadingLootBox } = useLootBox(id || '');
   const createMutation = useCreateLootBox();
   const updateMutation = useUpdateLootBox(id || '');
@@ -74,14 +74,14 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
   useEffect(() => {
     if (lootBox && isEdit) {
       // Convert tags object to array if needed
-      const tagsArray = lootBox.tags 
-        ? (Array.isArray(lootBox.tags) 
-            ? lootBox.tags 
-            : Object.keys(lootBox.tags).filter(key => lootBox.tags[key]))
+      const tagsArray = lootBox.tags
+        ? (Array.isArray(lootBox.tags)
+          ? lootBox.tags
+          : Object.keys(lootBox.tags).filter(key => lootBox.tags[Number(key)]))
         : [];
-      
+
       setTags(tagsArray);
-      
+
       form.setFieldsValue({
         ...lootBox,
         available_from: lootBox.available_from ? dayjs(lootBox.available_from) : null,
@@ -94,7 +94,7 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
     try {
       // Convert tags array to object format expected by database
       const tagsObject = tags.reduce((acc, tag) => ({ ...acc, [tag]: true }), {});
-      
+
       const formattedValues = {
         ...values,
         tags: tagsObject,
@@ -109,7 +109,7 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
         await createMutation.mutateAsync(formattedValues);
         message.success('Loot box created successfully');
       }
-      
+
       router.push('/admin/lootboxes');
     } catch (error) {
       console.error('Error saving loot box:', error);
@@ -195,13 +195,13 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
 
         {/* Tabs */}
         <Tabs activeKey={activeTab} onChange={setActiveTab} type="card">
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <InfoCircleOutlined />
                 Basic Information
               </span>
-            } 
+            }
             key="basic"
           >
             <Row gutter={24}>
@@ -215,8 +215,8 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
                   ]}
                   tooltip="Unique identifier for the loot box. Cannot be changed after creation."
                 >
-                  <Input 
-                    placeholder="e.g., legendary_dragon_chest" 
+                  <Input
+                    placeholder="e.g., legendary_dragon_chest"
                     disabled={isEdit}
                     addonBefore="lootbox_"
                   />
@@ -234,9 +234,9 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
                   name="description"
                   label="Description"
                 >
-                  <TextArea 
-                    rows={4} 
-                    placeholder="Describe the loot box contents, theme, and any special features..." 
+                  <TextArea
+                    rows={4}
+                    placeholder="Describe the loot box contents, theme, and any special features..."
                   />
                 </Form.Item>
 
@@ -281,12 +281,12 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
                         {LOOT_BOX_TIERS.map(tier => (
                           <Option key={tier.value} value={tier.value}>
                             <Space>
-                              <span style={{ 
-                                display: 'inline-block', 
-                                width: 8, 
-                                height: 8, 
-                                borderRadius: 4, 
-                                backgroundColor: tier.color 
+                              <span style={{
+                                display: 'inline-block',
+                                width: 8,
+                                height: 8,
+                                borderRadius: 4,
+                                backgroundColor: tier.color
                               }} />
                               {tier.label}
                             </Space>
@@ -337,8 +337,8 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
                       label="Open Cost Amount"
                       rules={[{ required: true, type: 'number', min: 0 }]}
                     >
-                      <InputNumber 
-                        style={{ width: '100%' }} 
+                      <InputNumber
+                        style={{ width: '100%' }}
                         min={0}
                         placeholder="0"
                       />
@@ -350,8 +350,8 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
                       label="Animation Duration (ms)"
                       rules={[{ required: true, type: 'number', min: 500, max: 10000 }]}
                     >
-                      <InputNumber 
-                        style={{ width: '100%' }} 
+                      <InputNumber
+                        style={{ width: '100%' }}
                         min={500}
                         max={10000}
                         step={100}
@@ -490,28 +490,28 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
 
                   <Form.Item
                     noStyle
-                    shouldUpdate={(prevValues, currentValues) => 
+                    shouldUpdate={(prevValues, currentValues) =>
                       prevValues.time_limited !== currentValues.time_limited
                     }
                   >
-                    {({ getFieldValue }) => 
+                    {({ getFieldValue }) =>
                       getFieldValue('time_limited') && (
                         <>
                           <Row gutter={16}>
                             <Col span={12}>
                               <Form.Item name="available_from" label="Available From">
-                                <DatePicker 
-                                  showTime 
-                                  style={{ width: '100%' }} 
+                                <DatePicker
+                                  showTime
+                                  style={{ width: '100%' }}
                                   placeholder="Select start date"
                                 />
                               </Form.Item>
                             </Col>
                             <Col span={12}>
                               <Form.Item name="available_until" label="Available Until">
-                                <DatePicker 
-                                  showTime 
-                                  style={{ width: '100%' }} 
+                                <DatePicker
+                                  showTime
+                                  style={{ width: '100%' }}
                                   placeholder="Select end date"
                                 />
                               </Form.Item>
@@ -533,65 +533,65 @@ export default function LootBoxForm({ id, isEdit }: LootBoxFormProps) {
             </Row>
           </TabPane>
 
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <GiftOutlined />
                 Reward Tables
               </span>
-            } 
+            }
             key="rewards"
             disabled={!id && !isEdit}
           >
             {id && <RewardTableManager lootBoxId={id} />}
           </TabPane>
 
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <SafetyOutlined />
                 Pity System
               </span>
-            } 
+            }
             key="pity"
             disabled={!id && !isEdit}
           >
             {id && <PitySystemManager lootBoxId={id} />}
           </TabPane>
 
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <StarOutlined />
                 Guaranteed Drops
               </span>
-            } 
+            }
             key="guaranteed"
             disabled={!id && !isEdit}
           >
             {id && <GuaranteedDropManager lootBoxId={id} />}
           </TabPane>
 
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <ThunderboltOutlined />
                 Streak Bonuses
               </span>
-            } 
+            }
             key="streak"
             disabled={!id && !isEdit}
           >
             {id && <StreakBonusManager lootBoxId={id} />}
           </TabPane>
 
-          <TabPane 
+          <TabPane
             tab={
               <span>
                 <TrophyOutlined />
                 First Time Bonuses
               </span>
-            } 
+            }
             key="firsttime"
             disabled={!id && !isEdit}
           >

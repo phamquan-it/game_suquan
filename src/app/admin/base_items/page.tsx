@@ -47,8 +47,8 @@ export default function BaseItemsPage() {
 
   return (
     <Layout style={{ minHeight: '100vh', background: token.colorBgBase }}>
-      <Header style={{ 
-        background: token.colorBgElevated, 
+      <Header style={{
+        background: token.colorBgElevated,
         padding: '0 24px',
         borderBottom: `2px solid ${token.colorBorder}`,
         display: 'flex',
@@ -56,22 +56,22 @@ export default function BaseItemsPage() {
         justifyContent: 'space-between',
       }}>
         <Title level={3} style={{ margin: 0, color: token.colorTextSecondary }}>
-          Item Management - 12 Walords
+          Quản Lý Vật Phẩm
         </Title>
         <Space>
-          <Button 
-            icon={<ReloadOutlined />} 
+          <Button
+            icon={<ReloadOutlined />}
             onClick={() => window.location.reload()}
           >
-            Refresh
+            Làm Mới
           </Button>
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             icon={<PlusOutlined />}
             onClick={handleCreate}
             style={{ background: token.colorPrimary, borderColor: token.colorBorder }}
           >
-            Create Item
+            Tạo Vật Phẩm
           </Button>
         </Space>
       </Header>
@@ -79,20 +79,20 @@ export default function BaseItemsPage() {
       <Content style={{ padding: '24px' }}>
         <Row gutter={[24, 24]}>
           <Col xs={24} lg={6}>
-            <ItemFilters 
-              filters={filters} 
+            <ItemFilters
+              filters={filters}
               onFiltersChange={setFilters}
             />
           </Col>
           <Col xs={24} lg={18}>
-            <Card 
-              bordered={false}
-              style={{ 
+            <Card
+              variant='borderless'
+              style={{
                 boxShadow: token.boxShadowTertiary,
                 borderRadius: token.borderRadiusLG,
               }}
             >
-              <ItemTable 
+              <ItemTable
                 filters={filters}
                 onEdit={handleEdit}
               />

@@ -22,7 +22,8 @@ import {
 import { useItems } from '../hooks/useItems';
 import { useDeleteItem } from '../hooks/useDeleteItem';
 import { getRarityColor, getQualityColor, formatItemType } from '../utils/itemHelpers';
-import { ItemFilterParams } from '../types';
+import { ItemFilterParams, ItemWithRelations } from '../types';
+import { ColumnsType } from 'antd/es/table';
 
 const { Text } = Typography;
 
@@ -35,36 +36,7 @@ export default function ItemTable({ filters, onEdit }: ItemTableProps) {
   const { data, isLoading } = useItems(filters);
   const deleteItem = useDeleteItem();
 
-  const columns = [
-    {
-      title: 'Icon',
-      key: 'icon',
-      width: 60,
-      render: (_: any, record: any) => (
-        record.icon ? (
-          <Image 
-            src={record.icon} 
-            alt={record.name}
-            width={40}
-            height={40}
-            preview={false}
-            fallback="/placeholder-item.png"
-          />
-        ) : (
-          <div style={{ 
-            width: 40, 
-            height: 40, 
-            background: '#f0f0f0',
-            borderRadius: 4,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
-            🎮
-          </div>
-        )
-      ),
-    },
+  const columns: ColumnsType<ItemWithRelations> = [
     {
       title: 'ID',
       dataIndex: 'id',
@@ -156,26 +128,27 @@ export default function ItemTable({ filters, onEdit }: ItemTableProps) {
     {
       title: 'Actions',
       key: 'actions',
-      width: 150,
+      fixed: 'right',
+      width: 180,
       render: (_: any, record: any) => (
         <Space size="small">
           <Tooltip title="View">
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<EyeOutlined />}
               onClick={() => window.open(`/items/${record.id}`, '_blank')}
             />
           </Tooltip>
           <Tooltip title="Edit">
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<EditOutlined />}
               onClick={() => onEdit(record)}
             />
           </Tooltip>
           <Tooltip title="Duplicate">
-            <Button 
-              type="text" 
+            <Button
+              type="text"
               icon={<CopyOutlined />}
             />
           </Tooltip>
@@ -187,9 +160,9 @@ export default function ItemTable({ filters, onEdit }: ItemTableProps) {
             cancelText="No"
           >
             <Tooltip title="Delete">
-              <Button 
-                type="text" 
-                danger 
+              <Button
+                type="text"
+                danger
                 icon={<DeleteOutlined />}
               />
             </Tooltip>

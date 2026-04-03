@@ -9,6 +9,7 @@ import RegionExpansion from './components/RegionExpansion';
 import RegionStats from './components/RegionStats';
 import { Region } from './types/region.types';
 import { useRegionById } from './hooks/useRegions';
+import ResourceTypesTabs from './components/ResourceTypesGrid';
 
 const { Content } = Layout;
 
@@ -29,22 +30,33 @@ export default function RegionsPage() {
     setExpansionModalVisible(true);
   };
 
+  // Breadcrumb items configuration
+  const breadcrumbItems = [
+    {
+      title: <HomeOutlined />,
+      href: '/admin',
+    },
+    {
+      title: 'Admin',
+    },
+    {
+      title: 'Regions',
+    },
+  ];
+
   return (
-    <Layout style={{ minHeight: '100vh', background: '#F5F5DC' }}>
-      <Content style={{ padding: '24px' }}>
-        <Breadcrumb style={{ marginBottom: 16 }}>
-          <Breadcrumb.Item href="/admin">
-            <HomeOutlined />
-          </Breadcrumb.Item>
-          <Breadcrumb.Item>Admin</Breadcrumb.Item>
-          <Breadcrumb.Item>Regions</Breadcrumb.Item>
-        </Breadcrumb>
+    <Layout style={{ minHeight: '98vh', background: '#F5F5DC' }}>
+      <Content style={{ padding: '22px' }}>
+        <Breadcrumb
+          items={breadcrumbItems}
+          style={{ marginBottom: 14 }}
+        />
 
         <Tabs
-          defaultActiveKey="1"
+          defaultActiveKey="-1"
           items={[
             {
-              key: '1',
+              key: '-1',
               label: (
                 <span>
                   <BankOutlined />
@@ -62,17 +74,24 @@ export default function RegionsPage() {
               ),
             },
             {
-              key: '2',
+              key: '0',
               label: 'Building Types',
               children: <div>Building Types Configuration (Coming Soon)</div>,
             },
             {
-              key: '3',
+              key: '1',
               label: 'Resource Types',
-              children: <div>Resource Types Configuration (Coming Soon)</div>,
+              children: (
+                <ResourceTypesTabs
+                  showCategoryFilter={true}
+                  onResourceTypeSelect={() => { }}
+                  defaultActiveCategory="all"
+                />
+
+              ),
             },
           ]}
-          style={{ background: '#FFFFFF', padding: '20px', borderRadius: 12 }}
+          style={{ background: '#FFFFFF', padding: '18px', borderRadius: 12 }}
         />
 
         <RegionBuildings

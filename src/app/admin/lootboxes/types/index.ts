@@ -1,4 +1,5 @@
-import { BaseItem } from "../../quests/types";
+import { LootBox } from "@/lib/types/loot-box";
+import { BaseItem } from "../../base_items/types";
 
 // Enums based on database constraints
 export type LootBoxType =
@@ -53,36 +54,6 @@ export type BoundType = "none" | "account" | "character";
 export type DistributionType = "weighted" | "random" | "sequential" | "pity";
 export type StreakType = "consecutive" | "total";
 
-// Core Loot Box
-export interface LootBox {
-  id: string;
-  name: string;
-  description: string | null;
-  type: LootBoxType;
-  box_type: LootBoxType;
-  tier: LootBoxTier;
-  category: LootBoxCategory;
-  open_cost_currency: string;
-  open_cost_amount: number;
-  opening_animation_type: OpeningAnimationType;
-  opening_animation_duration: number;
-  sound_effect: string | null;
-  particle_effect: string | null;
-  custom_animation: string | null;
-  glow_color: string | null;
-  particle_color: string | null;
-  shine_effect: boolean | null;
-  rarity_pulse: boolean | null;
-  tags: Record<string, any> | null;
-  season: string | null;
-  event: string | null;
-  exclusive: boolean | null;
-  time_limited: boolean | null;
-  available_from: Date | string | null;
-  available_until: Date | string | null;
-  created_at: Date | string | null;
-  updated_at: Date | string | null;
-}
 
 // Reward System
 export interface LootBoxRewardTable {
@@ -118,6 +89,7 @@ export interface LootBoxRewardItem {
   weight: number;
   rarity: Rarity;
   bound_type: BoundType;
+  base_items?: BaseItem[];
 }
 
 // Pity System
@@ -144,7 +116,7 @@ export interface LootBoxPityItem {
 
 // Guaranteed Drops
 export interface LootBoxGuaranteedDrop {
-  rewards: any;
+  rewards: LootBoxGuaranteedReward;
   id: string;
   loot_box_id: string;
   open_count: number;
@@ -214,13 +186,14 @@ export interface LootBoxWithDetails extends LootBox {
 }
 
 export interface LootBoxRewardTableWithDetails extends LootBoxRewardTable {
-  pools?: LootBoxRewardPoolWithItems[];
+  pools: LootBoxRewardPoolWithItems[];
   streak_bonus?: LootBoxStreakBonusWithTiers;
-  first_time_bonus?: LootBoxFirstTimeBonusWithRewards;
+  first_time_bonus: LootBoxFirstTimeBonusWithRewards;
+
 }
 
 export interface LootBoxRewardPoolWithItems extends LootBoxRewardPool {
-  items?: LootBoxRewardItem[];
+  items: BaseItem[];
 }
 
 export interface LootBoxPitySystemWithCounters extends LootBoxPitySystem {
@@ -233,7 +206,7 @@ export interface LootBoxPityCounterWithItems extends LootBoxPityCounter {
 
 export interface LootBoxGuaranteedDropWithRewards
   extends LootBoxGuaranteedDrop {
-  rewards?: LootBoxGuaranteedReward[];
+
 }
 
 export interface LootBoxStreakBonusWithTiers extends LootBoxStreakBonus {

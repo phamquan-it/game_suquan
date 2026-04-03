@@ -18,8 +18,6 @@ import {
   message,
   Typography,
   Dropdown,
-  Menu,
-  Avatar,
   Statistic,
   DatePicker,
   Modal,
@@ -30,7 +28,6 @@ import {
   DeleteOutlined,
   EyeOutlined,
   SearchOutlined,
-  FilterOutlined,
   DownloadOutlined,
   UploadOutlined,
   CopyOutlined,
@@ -39,7 +36,6 @@ import {
   SafetyOutlined,
   ThunderboltOutlined,
   StarOutlined,
-  TrophyOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -50,8 +46,11 @@ import {
   LOOT_BOX_TIERS,
 } from './constants/lootbox.constants';
 import type { ColumnsType } from 'antd/es/table';
-import type { LootBox } from '@/types/lootbox';
 import dayjs from 'dayjs';
+import 'dayjs/locale/vi';
+import { LootBox } from '@/lib/types/loot-box';
+
+dayjs.locale('vi');
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -70,7 +69,7 @@ export default function LootBoxesPage() {
   const [selectedRowKeys, setSelectedRowKeys] = useState<React.Key[]>([]);
 
   // Fetch loot boxes with filters
-  const { data, isLoading, refetch } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['lootBoxes', { searchText, typeFilter, categoryFilter, tierFilter, dateRange, pagination }],
     queryFn: () => lootBoxService.getLootBoxes(
       {
@@ -94,11 +93,11 @@ export default function LootBoxesPage() {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => lootBoxService.deleteLootBox(id),
     onSuccess: () => {
-      message.success('Loot box deleted successfully');
+      message.success('Xóa hòm quà thành công');
       queryClient.invalidateQueries({ queryKey: ['lootBoxes'] });
     },
     onError: (error: any) => {
-      message.error(error.message || 'Failed to delete loot box');
+      message.error(error.message || 'Xóa hòm quà thất bại');
     },
   });
 
@@ -106,12 +105,12 @@ export default function LootBoxesPage() {
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: string[]) => Promise.all(ids.map(id => lootBoxService.deleteLootBox(id))),
     onSuccess: () => {
-      message.success(`${selectedRowKeys.length} loot boxes deleted successfully`);
+      message.success(`Đã xóa thành công ${selectedRowKeys.length} hòm quà`);
       setSelectedRowKeys([]);
       queryClient.invalidateQueries({ queryKey: ['lootBoxes'] });
     },
     onError: (error: any) => {
-      message.error(error.message || 'Failed to delete loot boxes');
+      message.error(error.message || 'Xóa hòm quà thất bại');
     },
   });
 
@@ -119,30 +118,30 @@ export default function LootBoxesPage() {
   const duplicateMutation = useMutation({
     mutationFn: async (id: string) => {
       const original = await lootBoxService.getLootBoxById(id);
-      const { id: _, created_at, updated_at, ...rest } = original;
+      const { id: _, ...rest } = original;
       return lootBoxService.createLootBox({
         ...rest,
-        name: `${rest.name} (Copy)`,
-        id: `${rest.id}_copy_${Date.now()}`,
+        name: `${rest.name} (Bản sao)`,
+        id: `${rest.type}_copy_${Date.now()}`,
       });
     },
     onSuccess: () => {
-      message.success('Loot box duplicated successfully');
+      message.success('Nhân bản hòm quà thành công');
       queryClient.invalidateQueries({ queryKey: ['lootBoxes'] });
     },
     onError: (error: any) => {
-      message.error(error.message || 'Failed to duplicate loot box');
+      message.error(error.message || 'Nhân bản hòm quà thất bại');
     },
   });
 
   const handleDelete = (id: string) => {
     confirm({
-      title: 'Delete Loot Box',
+      title: 'Xóa Hòm Quà',
       icon: <ExclamationCircleOutlined />,
-      content: 'Are you sure you want to delete this loot box? This action cannot be undone.',
-      okText: 'Yes',
+      content: 'Bạn có chắc chắn muốn xóa hòm quà này? Hành động này không thể hoàn tác.',
+      okText: 'Xóa',
       okType: 'danger',
-      cancelText: 'No',
+      cancelText: 'Hủy',
       onOk() {
         return deleteMutation.mutateAsync(id);
       },
@@ -151,12 +150,12 @@ export default function LootBoxesPage() {
 
   const handleBulkDelete = () => {
     confirm({
-      title: `Delete ${selectedRowKeys.length} Loot Boxes`,
+      title: `Xóa ${selectedRowKeys.length} Hòm Quà`,
       icon: <ExclamationCircleOutlined />,
-      content: 'Are you sure you want to delete the selected loot boxes? This action cannot be undone.',
-      okText: 'Yes',
+      content: 'Bạn có chắc chắn muốn xóa các hòm quà đã chọn? Hành động này không thể hoàn tác.',
+      okText: 'Xóa',
       okType: 'danger',
-      cancelText: 'No',
+      cancelText: 'Hủy',
       onOk() {
         return bulkDeleteMutation.mutateAsync(selectedRowKeys as string[]);
       },
@@ -169,7 +168,7 @@ export default function LootBoxesPage() {
 
   const handleExport = () => {
     const dataStr = JSON.stringify(data?.data, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr);
     const exportFileDefaultName = `lootboxes_export_${dayjs().format('YYYYMMDD_HHmmss')}.json`;
     const linkElement = document.createElement('a');
     linkElement.setAttribute('href', dataUri);
@@ -186,24 +185,24 @@ export default function LootBoxesPage() {
       try {
         const content = e.target?.result as string;
         const lootBoxes = JSON.parse(content);
-        
+
         // Validate and import each loot box
         for (const lootBox of Array.isArray(lootBoxes) ? lootBoxes : [lootBoxes]) {
           try {
             await lootBoxService.createLootBox(lootBox);
           } catch (error) {
-            console.error('Failed to import loot box:', lootBox.id, error);
+            console.error('Không thể nhập hòm quà:', lootBox.id, error);
           }
         }
-        
-        message.success('Import completed');
+
+        message.success('Nhập dữ liệu thành công');
         queryClient.invalidateQueries({ queryKey: ['lootBoxes'] });
       } catch (error) {
-        message.error('Failed to parse import file');
+        message.error('Không thể đọc file nhập dữ liệu');
       }
     };
     reader.readAsText(file);
-    
+
     // Reset input
     event.target.value = '';
   };
@@ -217,22 +216,22 @@ export default function LootBoxesPage() {
     const now = dayjs();
     const availableFrom = record.available_from ? dayjs(record.available_from) : null;
     const availableUntil = record.available_until ? dayjs(record.available_until) : null;
-    
+
     if (availableFrom && availableFrom > now) {
-      return { status: 'upcoming', color: 'blue', text: 'Upcoming' };
+      return { status: 'upcoming', color: 'blue', text: 'Sắp ra mắt' };
     }
     if (availableUntil && availableUntil < now) {
-      return { status: 'expired', color: 'red', text: 'Expired' };
+      return { status: 'expired', color: 'red', text: 'Hết hạn' };
     }
     if (record.time_limited) {
-      return { status: 'limited', color: 'orange', text: 'Time Limited' };
+      return { status: 'limited', color: 'orange', text: 'Giới hạn thời gian' };
     }
-    return { status: 'available', color: 'green', text: 'Available' };
+    return { status: 'available', color: 'green', text: 'Khả dụng' };
   };
 
   const columns: ColumnsType<LootBox> = [
     {
-      title: 'Name',
+      title: 'Tên',
       dataIndex: 'name',
       key: 'name',
       fixed: 'left',
@@ -242,16 +241,16 @@ export default function LootBoxesPage() {
           <Text strong style={{ fontSize: 16 }}>{text}</Text>
           <Text type="secondary" style={{ fontSize: 12 }}>ID: {record.id}</Text>
           <Space size={4} wrap>
-            {record.exclusive && <Tag color="purple">Exclusive</Tag>}
-            {record.season && <Tag color="cyan">Season: {record.season}</Tag>}
-            {record.event && <Tag color="gold">Event: {record.event}</Tag>}
+            {record.exclusive && <Tag color="purple">Độc quyền</Tag>}
+            {record.season && <Tag color="cyan">Mùa: {record.season}</Tag>}
+            {record.event && <Tag color="gold">Sự kiện: {record.event}</Tag>}
           </Space>
         </Space>
       ),
       sorter: (a, b) => a.name.localeCompare(b.name),
     },
     {
-      title: 'Type',
+      title: 'Loại',
       dataIndex: 'type',
       key: 'type',
       width: 120,
@@ -263,7 +262,7 @@ export default function LootBoxesPage() {
       onFilter: (value, record) => record.type === value,
     },
     {
-      title: 'Category',
+      title: 'Danh mục',
       dataIndex: 'category',
       key: 'category',
       width: 120,
@@ -275,7 +274,7 @@ export default function LootBoxesPage() {
       onFilter: (value, record) => record.category === value,
     },
     {
-      title: 'Tier',
+      title: 'Cấp độ',
       dataIndex: 'tier',
       key: 'tier',
       width: 100,
@@ -288,18 +287,18 @@ export default function LootBoxesPage() {
       onFilter: (value, record) => record.tier === value,
     },
     {
-      title: 'Cost',
+      title: 'Chi phí',
       key: 'cost',
       width: 120,
       render: (_: any, record: LootBox) => (
-        <Badge 
+        <Badge
           count={`${record.open_cost_amount} ${record.open_cost_currency}`}
           style={{ backgroundColor: '#52c41a' }}
         />
       ),
     },
     {
-      title: 'Status',
+      title: 'Trạng thái',
       key: 'status',
       width: 120,
       render: (_: any, record: LootBox) => {
@@ -309,12 +308,12 @@ export default function LootBoxesPage() {
             <Badge status={status.color as any} text={status.text} />
             {record.available_from && (
               <Text type="secondary" style={{ fontSize: 12 }}>
-                From: {dayjs(record.available_from).format('MMM DD, YYYY')}
+                Từ: {dayjs(record.available_from).format('DD/MM/YYYY')}
               </Text>
             )}
             {record.available_until && (
               <Text type="secondary" style={{ fontSize: 12 }}>
-                Until: {dayjs(record.available_until).format('MMM DD, YYYY')}
+                Đến: {dayjs(record.available_until).format('DD/MM/YYYY')}
               </Text>
             )}
           </Space>
@@ -322,46 +321,45 @@ export default function LootBoxesPage() {
       },
     },
     {
-      title: 'Features',
+      title: 'Tính năng',
       key: 'features',
       width: 150,
       render: (_: any, record: LootBox) => (
         <Space size={4} wrap>
-          {record.shine_effect && <Tooltip title="Shine Effect"><Tag icon={<StarOutlined />} color="gold">Shine</Tag></Tooltip>}
-          {record.rarity_pulse && <Tooltip title="Rarity Pulse"><Tag icon={<ThunderboltOutlined />} color="purple">Pulse</Tag></Tooltip>}
+          {record.shine_effect && <Tooltip title="Hiệu ứng ánh sáng"><Tag icon={<StarOutlined />} color="gold">Ánh sáng</Tag></Tooltip>}
+          {record.rarity_pulse && <Tooltip title="Hiệu ứng nhấp nháy"><Tag icon={<ThunderboltOutlined />} color="purple">Nhấp nháy</Tag></Tooltip>}
         </Space>
       ),
     },
     {
-      title: 'Created',
+      title: 'Ngày tạo',
       dataIndex: 'created_at',
       key: 'created_at',
       width: 120,
-      render: (date: string) => dayjs(date).format('MMM DD, YYYY'),
-      sorter: (a, b) => dayjs(a.created_at).unix() - dayjs(b.created_at).unix(),
+      render: (date: string) => dayjs(date).format('DD/MM/YYYY'),
     },
     {
-      title: 'Actions',
+      title: 'Thao tác',
       key: 'actions',
       fixed: 'right',
       width: 200,
       render: (_: any, record: LootBox) => (
         <Space>
-          <Tooltip title="View Details">
+          <Tooltip title="Xem chi tiết">
             <Button
               type="text"
               icon={<EyeOutlined />}
-              onClick={() => router.push(`/admin/lootboxes/${record.id}`)}
+              onClick={() => window.open(`/admin/lootboxes/${record.id}`, '_blank')}
             />
           </Tooltip>
-          <Tooltip title="Edit">
+          <Tooltip title="Chỉnh sửa">
             <Button
               type="text"
               icon={<EditOutlined />}
               onClick={() => router.push(`/admin/lootboxes/${record.id}/edit`)}
             />
           </Tooltip>
-          <Tooltip title="Duplicate">
+          <Tooltip title="Nhân bản">
             <Button
               type="text"
               icon={<CopyOutlined />}
@@ -369,14 +367,14 @@ export default function LootBoxesPage() {
               loading={duplicateMutation.isPending}
             />
           </Tooltip>
-          <Tooltip title="Reward Tables">
+          <Tooltip title="Bảng thưởng">
             <Button
               type="text"
               icon={<GiftOutlined />}
               onClick={() => router.push(`/admin/lootboxes/${record.id}?tab=rewards`)}
             />
           </Tooltip>
-          <Tooltip title="Pity System">
+          <Tooltip title="Hệ thống tích lũy">
             <Button
               type="text"
               icon={<SafetyOutlined />}
@@ -384,13 +382,13 @@ export default function LootBoxesPage() {
             />
           </Tooltip>
           <Popconfirm
-            title="Delete loot box"
-            description="Are you sure you want to delete this loot box?"
+            title="Xóa hòm quà"
+            description="Bạn có chắc chắn muốn xóa hòm quà này?"
             onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
+            okText="Xóa"
+            cancelText="Hủy"
           >
-            <Tooltip title="Delete">
+            <Tooltip title="Xóa">
               <Button type="text" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
@@ -406,14 +404,20 @@ export default function LootBoxesPage() {
     },
   };
 
-  const menu = (
-    <Menu>
-      <Menu.Item key="export" icon={<DownloadOutlined />} onClick={handleExport}>
-        Export to JSON
-      </Menu.Item>
-      <Menu.Item key="import" icon={<UploadOutlined />}>
+
+  const menuItems = [
+    {
+      key: 'export',
+      icon: <DownloadOutlined />,
+      label: 'Xuất ra JSON',
+      onClick: handleExport,
+    },
+    {
+      key: 'import',
+      icon: <UploadOutlined />,
+      label: (
         <label style={{ cursor: 'pointer' }}>
-          Import from JSON
+          Nhập từ JSON
           <input
             type="file"
             accept=".json"
@@ -421,9 +425,9 @@ export default function LootBoxesPage() {
             onChange={handleImport}
           />
         </label>
-      </Menu.Item>
-    </Menu>
-  );
+      ),
+    },
+  ];
 
   return (
     <div style={{ padding: 24 }}>
@@ -432,17 +436,17 @@ export default function LootBoxesPage() {
         <Row justify="space-between" align="middle" style={{ marginBottom: 24 }}>
           <Col>
             <Title level={2} style={{ margin: 0 }}>
-              Loot Boxes
+              Quản lý Hòm Quà
             </Title>
             <Text type="secondary">
-              Manage and configure all loot boxes in the game
+              Quản lý và cấu hình tất cả các hòm quà trong trò chơi
             </Text>
           </Col>
           <Col>
             <Space>
-              <Dropdown overlay={menu} placement="bottomRight">
+              <Dropdown menu={{ items: menuItems }} placement="bottomRight">
                 <Button icon={<DownloadOutlined />}>
-                  Import/Export
+                  Nhập/Xuất
                 </Button>
               </Dropdown>
               {selectedRowKeys.length > 0 && (
@@ -452,7 +456,7 @@ export default function LootBoxesPage() {
                   onClick={handleBulkDelete}
                   loading={bulkDeleteMutation.isPending}
                 >
-                  Delete ({selectedRowKeys.length})
+                  Xóa ({selectedRowKeys.length})
                 </Button>
               )}
               <Button
@@ -461,7 +465,7 @@ export default function LootBoxesPage() {
                 onClick={() => router.push('/admin/lootboxes/new')}
                 size="large"
               >
-                Create Loot Box
+                Tạo Hòm Quà Mới
               </Button>
             </Space>
           </Col>
@@ -472,7 +476,7 @@ export default function LootBoxesPage() {
           <Col span={6}>
             <Card>
               <Statistic
-                title="Total Loot Boxes"
+                title="Tổng số hòm quà"
                 value={data?.total || 0}
                 prefix={<GiftOutlined />}
               />
@@ -481,7 +485,7 @@ export default function LootBoxesPage() {
           <Col span={6}>
             <Card>
               <Statistic
-                title="Active"
+                title="Đang khả dụng"
                 value={data?.data?.filter(b => getStatus(b).status === 'available').length || 0}
                 valueStyle={{ color: '#3f8600' }}
               />
@@ -490,7 +494,7 @@ export default function LootBoxesPage() {
           <Col span={6}>
             <Card>
               <Statistic
-                title="Upcoming"
+                title="Sắp ra mắt"
                 value={data?.data?.filter(b => getStatus(b).status === 'upcoming').length || 0}
                 valueStyle={{ color: '#1890ff' }}
               />
@@ -499,7 +503,7 @@ export default function LootBoxesPage() {
           <Col span={6}>
             <Card>
               <Statistic
-                title="Expired"
+                title="Đã hết hạn"
                 value={data?.data?.filter(b => getStatus(b).status === 'expired').length || 0}
                 valueStyle={{ color: '#cf1322' }}
               />
@@ -512,7 +516,7 @@ export default function LootBoxesPage() {
           <Row gutter={[16, 16]} align="middle">
             <Col xs={24} sm={24} md={8} lg={6}>
               <Input
-                placeholder="Search by name or ID"
+                placeholder="Tìm kiếm theo tên hoặc ID"
                 prefix={<SearchOutlined />}
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
@@ -521,7 +525,7 @@ export default function LootBoxesPage() {
             </Col>
             <Col xs={24} sm={12} md={8} lg={4}>
               <Select
-                placeholder="Filter by type"
+                placeholder="Lọc theo loại"
                 style={{ width: '100%' }}
                 value={typeFilter || undefined}
                 onChange={setTypeFilter}
@@ -536,7 +540,7 @@ export default function LootBoxesPage() {
             </Col>
             <Col xs={24} sm={12} md={8} lg={4}>
               <Select
-                placeholder="Filter by category"
+                placeholder="Lọc theo danh mục"
                 style={{ width: '100%' }}
                 value={categoryFilter || undefined}
                 onChange={setCategoryFilter}
@@ -551,7 +555,7 @@ export default function LootBoxesPage() {
             </Col>
             <Col xs={24} sm={12} md={8} lg={4}>
               <Select
-                placeholder="Filter by tier"
+                placeholder="Lọc theo cấp độ"
                 style={{ width: '100%' }}
                 value={tierFilter || undefined}
                 onChange={setTierFilter}
@@ -577,7 +581,7 @@ export default function LootBoxesPage() {
               <RangePicker
                 style={{ width: '100%' }}
                 onChange={(dates) => setDateRange(dates as any)}
-                placeholder={['Available from', 'Available until']}
+                placeholder={['Có hiệu lực từ', 'Có hiệu lực đến']}
               />
             </Col>
           </Row>
@@ -597,7 +601,7 @@ export default function LootBoxesPage() {
             total: data?.total,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total) => `Total ${total} items`,
+            showTotal: (total) => `Tổng số ${total} mục`,
             onChange: (page, pageSize) => {
               setPagination({ current: page, pageSize: pageSize || 10 });
             },

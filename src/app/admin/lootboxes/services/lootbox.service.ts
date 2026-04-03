@@ -1,7 +1,8 @@
 // app/admin/lootboxes/services/lootbox.service.ts
 import { supabase } from '@/utils/supabase/client';
 import { ApiResponse, LootBoxFilters, PaginationParams } from '../types/lootbox.types';
-import { LootBox, LootBoxFirstTimeBonus, LootBoxGuaranteedDrop, LootBoxPitySystem, LootBoxRewardTable, LootBoxStreakBonus } from '../types';
+import { LootBox } from '@/lib/types/loot-box';
+import { LootBoxFirstTimeBonus, LootBoxGuaranteedDrop, LootBoxPitySystem, LootBoxRewardTable, LootBoxStreakBonus } from '../types';
 class LootBoxService {
   // Loot Boxes
   async getLootBoxes(
@@ -263,28 +264,25 @@ class LootBoxService {
     }
   }
 
-  // Pity System
-  async getPitySystem(lootBoxId: string): Promise<LootBoxPitySystem & { counters: any[] }> {
+  async getPitySystem(lootBoxId: string): Promise<any> {
     try {
-      const { data, error } = await supabase
-        .from('loot_box_pity_systems')
-        .select(`
-          *,
-          counters:loot_box_pity_counters(
-            *,
-            items:loot_box_pity_items(*)
-          )
-        `)
-        .eq('loot_box_id', lootBoxId)
-        .single();
+      console.log(`called ${lootBoxId}`);
 
-      if (error) throw error;
+      const { data, error } = await supabase
+        .rpc('get_loot_box_pity_system', { lb_id: lootBoxId });
+
+      if (error) {
+        console.error('Error fetching pity system via RPC:', error);
+        throw error;
+      }
+
       return data;
     } catch (error) {
-      console.error('Error fetching pity system:', error);
+      console.error('Error in getPitySystem RPC call:', error);
       throw error;
     }
   }
+
 
   async updatePitySystem(lootBoxId: string, data: any): Promise<LootBoxPitySystem> {
     try {
@@ -296,7 +294,7 @@ class LootBoxService {
         .single();
 
       let pitySystem;
-      
+
       if (existing) {
         // Update existing
         const { data: updated, error } = await supabase

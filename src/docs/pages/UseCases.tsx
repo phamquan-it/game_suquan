@@ -1,10 +1,10 @@
 import React from 'react';
 import { Typography, Card, Row, Col, Tag, Steps, Alert, Table, Timeline, Divider, Collapse } from 'antd';
-import { 
-  CrownOutlined, 
-  GiftOutlined, 
-  DollarOutlined, 
-  TeamOutlined, 
+import {
+  CrownOutlined,
+  GiftOutlined,
+  DollarOutlined,
+  TeamOutlined,
   SafetyCertificateOutlined,
   RocketOutlined,
   CalendarOutlined,
@@ -331,7 +331,7 @@ HAVING SUM(amount) > 1000000 OR COUNT(*) > 100;`,
         <Row gutter={[16, 16]} className="mb-8">
           {playerProgressionCases.map((useCase, index) => (
             <Col xs={24} lg={8} key={index}>
-              <Card 
+              <Card
                 className="h-full border-2 border-imperial-gold bg-white hover:shadow-xl transition-all duration-300 hover:scale-105"
                 title={
                   <div className="flex items-center">
@@ -392,7 +392,7 @@ HAVING SUM(amount) > 1000000 OR COUNT(*) > 100;`,
         <Row gutter={[16, 16]} className="mb-8">
           {monetizationCases.map((useCase, index) => (
             <Col xs={24} md={12} lg={8} key={index}>
-              <Card 
+              <Card
                 className="h-full border-2 border-imperial-gold bg-white"
                 title={
                   <div className="flex items-center">
@@ -456,7 +456,7 @@ HAVING SUM(amount) > 1000000 OR COUNT(*) > 100;`,
         <Row gutter={[16, 16]} className="mb-8">
           {socialEconomyCases.map((useCase, index) => (
             <Col xs={24} md={12} lg={8} key={index}>
-              <Card 
+              <Card
                 className="h-full border-2 border-imperial-gold bg-white"
                 title={
                   <div className="flex items-center">
@@ -509,7 +509,7 @@ HAVING SUM(amount) > 1000000 OR COUNT(*) > 100;`,
         <Row gutter={[16, 16]} className="mb-8">
           {technicalImplementationCases.map((useCase, index) => (
             <Col xs={24} key={index}>
-              <Card 
+              <Card
                 className="border-2 border-imperial-gold bg-white"
                 title={
                   <div className="flex items-center">
@@ -568,7 +568,7 @@ HAVING SUM(amount) > 1000000 OR COUNT(*) > 100;`,
         <Row gutter={[16, 16]}>
           {advancedScenarios.map((scenario, index) => (
             <Col xs={24} md={12} lg={8} key={index}>
-              <Card 
+              <Card
                 className="h-full border-2 border-imperial-gold bg-gradient-to-br from-noble-parchment to-amber-50"
                 title={
                   <Text strong className="text-imperial-red text-lg">
@@ -583,7 +583,6 @@ HAVING SUM(amount) > 1000000 OR COUNT(*) > 100;`,
                 <div className="mb-4">
                   <Text strong className="text-imperial-red">Implementation Steps:</Text>
                   <Timeline
-                    size="small"
                     items={scenario.steps.map((step, idx) => ({
                       color: 'green',
                       children: <Text className="text-noble-brown text-sm">{step}</Text>
@@ -602,8 +601,8 @@ HAVING SUM(amount) > 1000000 OR COUNT(*) > 100;`,
         </Row>
 
         {/* Implementation Timeline */}
-        <Card 
-          title="🏛️ Royal Implementation Roadmap" 
+        <Card
+          title="🏛️ Royal Implementation Roadmap"
           className="border-2 border-imperial-gold bg-white mt-8"
           extra={<Tag color="red">Strategic</Tag>}
         >

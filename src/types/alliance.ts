@@ -23,6 +23,7 @@ export interface AllianceRequirements {
 }
 
 export interface CreateAllianceData {
+    max_members: number;
     name: string;
     tag: string;
     description?: string;

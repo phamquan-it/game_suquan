@@ -34,19 +34,21 @@ const GameLogo: React.FC = () => {
         textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
         letterSpacing: 2
       }}>
-        12 WARLORDS
+        12 SỨ QUÂN
       </h1>
       <p style={{
-        color: '#8B4513',
+        color: '#D4AF37',
         fontSize: 14,
         fontStyle: 'italic',
         marginTop: 8,
         borderTop: '1px solid #D4AF37',
         borderBottom: '1px solid #D4AF37',
         padding: '8px 0',
-        display: 'inline-block'
+        display: 'inline-block',
+        textTransform: 'uppercase',
+        letterSpacing: 1
       }}>
-        Rise to Power, Claim Your Throne
+        Thống nhất giang sơn - lưu danh sử sách
       </p>
     </div>
   );

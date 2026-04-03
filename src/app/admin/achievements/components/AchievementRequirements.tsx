@@ -33,23 +33,25 @@ import { supabase } from '@/utils/supabase/client';
 
 const { Text } = Typography;
 const { Option } = Select;
-const { TextArea } = Input;
 
 interface AchievementRequirementsProps {
   achievementId?: string;
   gameActions: GameAction[];
   readOnly?: boolean;
+  onRequirementSelected?: (requirement: AchievementRequirement) => void;
 }
 
 export const AchievementRequirements: React.FC<AchievementRequirementsProps> = ({
   achievementId,
   gameActions,
   readOnly = false,
+  onRequirementSelected,
 }) => {
   const [requirements, setRequirements] = useState<RequirementWithReward[]>([]);
   const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRequirement, setEditingRequirement] = useState<AchievementRequirement | null>(null);
+  const [selectedRowKey, setSelectedRowKey] = useState<number | null>(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -68,15 +70,15 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
         .select(`
           *,
           rewards:achievement_rewards(*)
-        `)
-        .eq('achievement_id', achievementId)
-        .order('sort_order', { ascending: true });
+        `).eq('achievement_id', achievementId);
+
+      console.log('Fetched requirements:', data);
 
       if (error) throw error;
       setRequirements(data || []);
     } catch (error) {
       console.error('Error fetching requirements:', error);
-      message.error('Failed to load requirements');
+      message.error('Không thể tải danh sách yêu cầu');
     } finally {
       setLoading(false);
     }
@@ -84,7 +86,7 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
 
   const handleSave = async (values: any) => {
     if (!achievementId) {
-      message.warning('Please save the achievement first before adding requirements');
+      message.warning('Vui lòng lưu thành tích trước khi thêm yêu cầu');
       return;
     }
 
@@ -99,14 +101,14 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
 
       let error;
       if (editingRequirement) {
-        // Update existing requirement
+        // Cập nhật yêu cầu hiện có
         const { error: updateError } = await supabase
           .from('achievement_requirements')
           .update(requirementData)
           .eq('id', editingRequirement.id);
         error = updateError;
       } else {
-        // Create new requirement
+        // Thêm yêu cầu mới
         const { error: insertError } = await supabase
           .from('achievement_requirements')
           .insert([requirementData]);
@@ -115,14 +117,14 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
 
       if (error) throw error;
 
-      message.success(`Requirement ${editingRequirement ? 'updated' : 'added'} successfully`);
+      message.success(`${editingRequirement ? 'Cập nhật' : 'Thêm'} yêu cầu thành công`);
       setModalVisible(false);
       form.resetFields();
       setEditingRequirement(null);
       fetchRequirements();
     } catch (error) {
       console.error('Error saving requirement:', error);
-      message.error('Failed to save requirement');
+      message.error('Không thể lưu yêu cầu');
     }
   };
 
@@ -135,11 +137,14 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
 
       if (error) throw error;
 
-      message.success('Requirement deleted successfully');
+      message.success('Xóa yêu cầu thành công');
+      if (selectedRowKey === id) {
+        setSelectedRowKey(null);
+      }
       fetchRequirements();
     } catch (error) {
       console.error('Error deleting requirement:', error);
-      message.error('Failed to delete requirement');
+      message.error('Không thể xóa yêu cầu');
     }
   };
 
@@ -154,13 +159,13 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
 
     const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
     const updatedRequirements = [...requirements];
-    
-    // Swap sort orders
+
+    // Hoán đổi thứ tự sắp xếp
     const tempSortOrder = updatedRequirements[currentIndex].sort_order;
     updatedRequirements[currentIndex].sort_order = updatedRequirements[newIndex].sort_order;
     updatedRequirements[newIndex].sort_order = tempSortOrder;
 
-    // Update in database
+    // Cập nhật trong database
     try {
       const updates = [
         supabase
@@ -175,49 +180,63 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
 
       await Promise.all(updates);
       setRequirements(updatedRequirements);
+      message.success('Sắp xếp lại thứ tự thành công');
     } catch (error) {
       console.error('Error reordering requirements:', error);
-      message.error('Failed to reorder requirements');
+      message.error('Không thể sắp xếp lại thứ tự');
     }
   };
 
-  const getActionLabel = (actionId: string) => {
-    const action = gameActions.find(a => a.id === actionId);
-    return action ? `${action.category} - ${action.description}` : actionId;
+  //  const getActionLabel = (actionId: string) => {
+  //    const action = gameActions.find(a => a.id === actionId);
+  //    return action ? `${action.category} - ${action.description}` : actionId;
+  //  };
+  //
+  const handleRowClick = (record: AchievementRequirement) => {
+    if (onRequirementSelected && !readOnly) {
+      setSelectedRowKey(record.id);
+      onRequirementSelected(record);
+    }
   };
 
   const columns = [
     {
-      title: 'Order',
+      title: 'Thứ tự',
       dataIndex: 'sort_order',
       key: 'sort_order',
-      width: 80,
+      width: 100,
       render: (_: any, record: AchievementRequirement) => (
         <Space>
-          <Tooltip title="Move up">
+          <Tooltip title="Di chuyển lên">
             <Button
               type="text"
               icon={<ArrowUpOutlined />}
               size="small"
               disabled={record.sort_order === 0}
-              onClick={() => handleMove(record.id, 'up')}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMove(record.id, 'up');
+              }}
             />
           </Tooltip>
-          <span>{record.sort_order + 1}</span>
-          <Tooltip title="Move down">
+          <span>{Number(record.sort_order) + 1}</span>
+          <Tooltip title="Di chuyển xuống">
             <Button
               type="text"
               icon={<ArrowDownOutlined />}
               size="small"
               disabled={record.sort_order === requirements.length - 1}
-              onClick={() => handleMove(record.id, 'down')}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMove(record.id, 'down');
+              }}
             />
           </Tooltip>
         </Space>
       ),
     },
     {
-      title: 'Requirement Type',
+      title: 'Loại yêu cầu',
       dataIndex: 'requirement_type',
       key: 'requirement_type',
       render: (type: string) => (
@@ -227,13 +246,13 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
       ),
     },
     {
-      title: 'Display Text',
+      title: 'Văn bản hiển thị',
       dataIndex: 'display_text',
       key: 'display_text',
       render: (text: string) => text || '-',
     },
     {
-      title: 'Target',
+      title: 'Mục tiêu',
       dataIndex: 'target',
       key: 'target',
       width: 100,
@@ -241,11 +260,11 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
       render: (target: number) => target.toLocaleString(),
     },
     {
-      title: 'Actions',
+      title: 'Thao tác',
       key: 'actions',
       width: 150,
       render: (_: any, record: AchievementRequirement) => (
-        <Space>
+        <Space onClick={(e) => e.stopPropagation()}>
           <Button
             type="text"
             icon={<EditOutlined />}
@@ -255,18 +274,18 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
               setModalVisible(true);
             }}
           >
-            Edit
+            Sửa
           </Button>
           <Popconfirm
-            title="Delete requirement"
-            description="Are you sure you want to delete this requirement?"
+            title="Xóa yêu cầu"
+            description="Bạn có chắc chắn muốn xóa yêu cầu này?"
             onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
+            okText="Có"
+            cancelText="Không"
             okButtonProps={{ danger: true }}
           >
             <Button type="text" danger icon={<DeleteOutlined />}>
-              Delete
+              Xóa
             </Button>
           </Popconfirm>
         </Space>
@@ -282,11 +301,23 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
     return acc;
   }, {} as Record<string, GameAction[]>);
 
+  // Thêm rowSelection để hỗ trợ chọn dòng
+  const rowSelection = onRequirementSelected ? {
+    type: 'radio' as const,
+    selectedRowKeys: selectedRowKey ? [selectedRowKey] : [],
+    onChange: (selectedRowKeys: React.Key[], selectedRows: AchievementRequirement[]) => {
+      if (selectedRows.length > 0) {
+        setSelectedRowKey(selectedRows[0].id);
+        onRequirementSelected(selectedRows[0]);
+      }
+    },
+  } : undefined;
+
   return (
     <Card className="bg-gray-50">
       <div className="flex justify-between items-center mb-4">
         <Text strong className="text-lg">
-          Requirements ({requirements.length})
+          Yêu cầu ({requirements.length})
         </Text>
         {!readOnly && (
           <Button
@@ -299,7 +330,7 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
             }}
             disabled={!achievementId}
           >
-            Add Requirement
+            Thêm yêu cầu
           </Button>
         )}
       </div>
@@ -307,7 +338,7 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
       {!achievementId && (
         <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
           <Text type="warning">
-            Please save the achievement first to add requirements
+            Vui lòng lưu thành tích trước khi thêm yêu cầu
           </Text>
         </div>
       )}
@@ -319,11 +350,17 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
         rowKey="id"
         pagination={false}
         size="small"
-        locale={{ emptyText: 'No requirements added yet' }}
+        locale={{ emptyText: 'Chưa có yêu cầu nào được thêm' }}
+        rowSelection={rowSelection}
+        onRow={(record) => ({
+          onClick: () => handleRowClick(record),
+          style: { cursor: onRequirementSelected ? 'pointer' : 'default' },
+          className: selectedRowKey === record.id ? 'bg-blue-50' : '',
+        })}
       />
 
       <Modal
-        title={editingRequirement ? 'Edit Requirement' : 'Add Requirement'}
+        title={editingRequirement ? 'Chỉnh sửa yêu cầu' : 'Thêm yêu cầu'}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -341,11 +378,11 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
         >
           <Form.Item
             name="requirement_type"
-            label="Requirement Type"
-            rules={[{ required: true, message: 'Please select requirement type' }]}
+            label="Loại yêu cầu"
+            rules={[{ required: true, message: 'Vui lòng chọn loại yêu cầu' }]}
           >
             <Select
-              placeholder="Select requirement type"
+              placeholder="Chọn loại yêu cầu"
               showSearch
               optionFilterProp="children"
             >
@@ -356,7 +393,7 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
                       {action.description}
                       {action.repeatable && (
                         <Tag color="green" className="ml-2">
-                          Repeatable
+                          Có thể lặp lại
                         </Tag>
                       )}
                     </Option>
@@ -368,21 +405,21 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
 
           <Form.Item
             name="display_text"
-            label="Display Text"
-            tooltip="Text shown to players (optional)"
+            label="Văn bản hiển thị"
+            tooltip="Văn bản hiển thị cho người chơi (tùy chọn)"
           >
-            <Input placeholder="e.g., Defeat 100 enemies" />
+            <Input placeholder="Ví dụ: Đánh bại 100 kẻ thù" />
           </Form.Item>
 
           <Form.Item
             name="target"
-            label="Target Value"
-            rules={[{ required: true, message: 'Please enter target value' }]}
+            label="Giá trị mục tiêu"
+            rules={[{ required: true, message: 'Vui lòng nhập giá trị mục tiêu' }]}
           >
             <InputNumber
               min={1}
               className="w-full"
-              placeholder="Enter target number"
+              placeholder="Nhập số lượng mục tiêu"
             />
           </Form.Item>
 
@@ -396,11 +433,12 @@ export const AchievementRequirements: React.FC<AchievementRequirementsProps> = (
                   setEditingRequirement(null);
                   form.resetFields();
                 }}
+                icon={<CloseOutlined />}
               >
-                Cancel
+                Hủy
               </Button>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
-                {editingRequirement ? 'Update' : 'Add'} Requirement
+                {editingRequirement ? 'Cập nhật' : 'Thêm'} yêu cầu
               </Button>
             </Space>
           </Form.Item>

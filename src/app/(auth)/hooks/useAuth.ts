@@ -1,155 +1,149 @@
+'use client';
+
+import { useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
+import { useRouter } from 'next/router';
 import { useMutation } from '@tanstack/react-query';
 import { message } from 'antd';
-import { useRouter } from 'next/navigation';
 
-interface LoginCredentials {
+interface LoginValues {
   email: string;
   password: string;
 }
 
-interface RegisterData {
-  username: string;
+interface ForgotPasswordValues {
   email: string;
-  password: string;
-  country?: string;
 }
 
-export const useLogin = () => {
-  const router = useRouter();
+interface RegisterValues {
+  email: string;
+  password: string;
+  fullName?: string;
+}
 
-  return useMutation({
-    mutationFn: async ({ email, password }: LoginCredentials) => {
+export function useLogin() {
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const mutateAsync = async (values: LoginValues) => {
+    setIsPending(true);
+    setError(null);
+
+    try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+        email: values.email,
+        password: values.password,
       });
 
-      if (error) throw error;
-
-      // Update player status to online
-      if (data.user) {
-        const { error: updateError } = await supabase
-          .from('players')
-          .update({
-            status: 'online',
-            last_login: new Date().toISOString(),
-          })
-          .eq('user_id', data.user.id);
-
-        if (updateError) console.error('Failed to update player status:', updateError);
+      console.log("login success")
+      if (error) {
+        setError(error.message);
+        throw error;
       }
 
       return data;
-    },
-    onSuccess: () => {
-      message.success('Welcome back, Warlord!');
-      router.push('/admin/dashboard');
-    },
-    onError: (error: any) => {
-      message.error(error.message || 'Login failed. Check your credentials.');
-    },
-  });
-};
+    } catch (err: any) {
+      console.log("login err")
+      setError(err.message || 'Login failed');
+      throw err;
+    } finally {
+      setIsPending(false);
+    }
+  };
 
-export const useRegister = () => {
-  const router = useRouter();
+  return { mutateAsync, isPending, error };
+}
 
-  return useMutation({
-    mutationFn: async ({ username, email, password, country }: RegisterData) => {
-      // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email,
-        password,
+export function useForgotPassword() {
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const sendResetEmail = async (values: ForgotPasswordValues) => {
+    setIsPending(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const { data, error } = await supabase.auth.resetPasswordForEmail(values.email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (error) {
+        setError(error.message);
+        throw error;
+      }
+      setSuccess('Password reset email sent. Check your inbox.');
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Failed to send reset email');
+      throw err;
+    } finally {
+      setIsPending(false);
+    }
+  };
+
+  return { sendResetEmail, isPending, error, success };
+}
+
+export function useRegister() {
+  const [isPending, setIsPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+
+  const registerUser = async (values: RegisterValues) => {
+    setIsPending(true);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
         options: {
           data: {
-            username,
+            full_name: values.fullName || '',
           },
         },
       });
 
-      if (authError) throw authError;
-
-      // Create player profile
-      if (authData.user) {
-        const { error: profileError } = await supabase
-          .from('players')
-          .insert([{
-            user_id: authData.user.id,
-            username,
-            email,
-            country: country || null,
-            status: 'online',
-            registration_date: new Date().toISOString(),
-            level: 1,
-            power: 0,
-            victory_points: 0,
-            win_rate: 0,
-            battles: 0,
-            wins: 0,
-            territory: 0,
-            violations: 0,
-          }]);
-
-        if (profileError) throw profileError;
+      if (error) {
+        setError(error.message);
+        throw error;
       }
 
-      return authData;
-    },
-    onSuccess: () => {
-      message.success('Account created successfully! Welcome to 12 Warlords.');
-      router.push('/admin/dashboard');
-    },
-    onError: (error: any) => {
-      message.error(error.message || 'Registration failed. Please try again.');
-    },
-  });
-};
+      setSuccess('Registration successful! Please check your email to confirm.');
+      return data;
+    } catch (err: any) {
+      setError(err.message || 'Registration failed');
+      throw err;
+    } finally {
+      setIsPending(false);
+    }
+  };
 
-export const useForgotPassword = () => {
-  return useMutation({
-    mutationFn: async (email: string) => {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
+  return { registerUser, isPending, error, success };
+}
 
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      message.success('Password reset email sent! Check your inbox.');
-    },
-    onError: (error: any) => {
-      message.error(error.message || 'Failed to send reset email.');
-    },
-  });
-};
+export function useLogout() {
 
-export const useLogout = () => {
-  const router = useRouter();
-
-  return useMutation({
+  const mutation = useMutation({
     mutationFn: async () => {
-      // Get current user before logout
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // Update player status to offline
-      if (user) {
-        await supabase
-          .from('players')
-          .update({ status: 'offline' })
-          .eq('user_id', user.id);
-      }
-
-      // Sign out
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+
+      // Optional: clear localStorage / Redux
+      //     localStorage.removeItem('supabase.auth.token');
+      // dispatch(logoutUser()) // nếu dùng Redux
+      return true;
     },
     onSuccess: () => {
-      message.info('You have been logged out.');
-      router.push('/login');
+      message.success('Logout successful!');
     },
-    onError: (error: any) => {
-      message.error(error.message || 'Logout failed.');
+    onError: (err: any) => {
+      console.error('Logout failed:', err);
     },
   });
-};
+
+  return mutation;
+}

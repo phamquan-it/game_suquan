@@ -1,19 +1,16 @@
 'use client';
 
-import React from 'react';
-import { Layout } from 'antd';
-import GeneralTable from './components/GeneralTable';
-import GeneralStatsCard from './components/GeneralStatsCard';
 
-const { Content } = Layout;
+import { Layout } from 'lucide-react';
+import GeneralStatsCard from './components/GeneralStatsCard';
+import GeneralTable from './components/GeneralTable';
+
 
 export default function GeneralManagementPage() {
-    return (
-        <Layout style={{ minHeight: '100vh', background: '#F5F5DC' }}>
-            <Content style={{ padding: '24px' }}>
-                <GeneralStatsCard />
-                <GeneralTable />
-            </Content>
-        </Layout>
-    );
+  return (
+    <div>
+      <GeneralStatsCard />
+      <GeneralTable />
+    </div>
+  );
 }

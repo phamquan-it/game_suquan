@@ -1,6 +1,4 @@
 // app/admin/achievements/components/AchievementFilters.tsx
-'use client';
-
 import React from 'react';
 import { Card, Input, Select, Row, Col, Button, Space, Radio } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -161,7 +159,7 @@ export const AchievementFiltersComponent: React.FC<AchievementFiltersProps> = ({
               onChange={(e) => handleChange('repeatable', e.target.value)}
               className="w-full"
             >
-              <Radio.Button value={null}>All</Radio.Button>
+              <Radio.Button value={undefined}>All</Radio.Button>
               <Radio.Button value={true}>Repeatable</Radio.Button>
               <Radio.Button value={false}>Non-repeatable</Radio.Button>
             </Radio.Group>

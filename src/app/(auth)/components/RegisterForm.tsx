@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { Form, Input, Button, Select, Divider, Progress, Checkbox } from 'antd';
-import { 
-  UserOutlined, 
-  LockOutlined, 
+import {
+  UserOutlined,
+  LockOutlined,
   MailOutlined,
   GlobalOutlined,
   CrownOutlined,
@@ -46,7 +46,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
   };
 
   const handleSubmit = async (values: any) => {
-    await register.mutateAsync(values);
+    //    await register.mutateAsync(values);
   };
 
   return (
@@ -65,7 +65,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           { pattern: /^[a-zA-Z0-9_]+$/, message: 'Only letters, numbers, and underscores' }
         ]}
       >
-        <Input 
+        <Input
           prefix={<CrownOutlined style={{ color: '#8B4513' }} />}
           placeholder="Warlord Name"
           style={{ borderColor: '#CD7F32', borderRadius: 8 }}
@@ -79,7 +79,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           { type: 'email', message: 'Enter a valid email' }
         ]}
       >
-        <Input 
+        <Input
           prefix={<MailOutlined style={{ color: '#8B4513' }} />}
           placeholder="Email"
           style={{ borderColor: '#CD7F32', borderRadius: 8 }}
@@ -130,9 +130,9 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
               {getStrengthText()}
             </span>
           </div>
-          <Progress 
-            percent={passwordStrength} 
-            showInfo={false} 
+          <Progress
+            percent={passwordStrength}
+            showInfo={false}
             strokeColor={getStrengthColor()}
             trailColor="#F1E8D6"
             size="small"
@@ -193,7 +193,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
           htmlType="submit"
           block
           loading={register.isPending}
-          style={{ 
+          style={{
             height: 48,
             backgroundColor: '#8B0000',
             border: '2px solid #D4AF37',
@@ -212,7 +212,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ onSwitchToLogin }) => {
       <Button
         block
         onClick={onSwitchToLogin}
-        style={{ 
+        style={{
           borderColor: '#CD7F32',
           color: '#8B4513',
           height: 40

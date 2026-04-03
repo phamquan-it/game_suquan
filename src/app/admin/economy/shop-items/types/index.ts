@@ -1,8 +1,8 @@
 import { BaseItem } from "@/app/admin/base_items/types"
 import { BeautyCharacter, GiftBeauty } from "@/app/admin/beauty/types"
 import General from "@/app/admin/generals/types"
-import { LootBox } from "@/app/admin/lootboxes/types"
 import { Unit } from "@/app/admin/units/types"
+import { LootBox } from "@/lib/types/loot-box"
 
 /* =======================
    Runtime constants

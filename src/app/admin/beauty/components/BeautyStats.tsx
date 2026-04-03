@@ -1,11 +1,11 @@
 'use client';
 
 import { Card, Col, Row, Statistic } from 'antd';
-import { 
-  UserOutlined, 
-  StarOutlined, 
-  RiseOutlined, 
-  TeamOutlined 
+import {
+  UserOutlined,
+  StarOutlined,
+  RiseOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/utils/supabase/client';
@@ -47,7 +47,7 @@ export function BeautyStats() {
   return (
     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
       <Col xs={24} sm={12} md={6}>
-        <Card bordered={false} style={{ background: 'linear-gradient(135deg, #8B0000 0%, #A52A2A 100%)' }}>
+        <Card variant='borderless' style={{ background: 'linear-gradient(135deg, #8B0000 0%, #A52A2A 100%)' }}>
           <Statistic
             title={<span style={{ color: '#F5F5DC' }}>Total Beauties</span>}
             value={stats.total}
@@ -57,7 +57,7 @@ export function BeautyStats() {
         </Card>
       </Col>
       <Col xs={24} sm={12} md={6}>
-        <Card bordered={false} style={{ background: 'linear-gradient(135deg, #2E8B57 0%, #3CB371 100%)' }}>
+        <Card variant='borderless' style={{ background: 'linear-gradient(135deg, #2E8B57 0%, #3CB371 100%)' }}>
           <Statistic
             title={<span style={{ color: '#F5F5DC' }}>Available</span>}
             value={stats.available}
@@ -67,7 +67,7 @@ export function BeautyStats() {
         </Card>
       </Col>
       <Col xs={24} sm={12} md={6}>
-        <Card bordered={false} style={{ background: 'linear-gradient(135deg, #FF8C00 0%, #FFA500 100%)' }}>
+        <Card variant='borderless' style={{ background: 'linear-gradient(135deg, #FF8C00 0%, #FFA500 100%)' }}>
           <Statistic
             title={<span style={{ color: '#F5F5DC' }}>On Mission</span>}
             value={stats.onMission}
@@ -77,7 +77,7 @@ export function BeautyStats() {
         </Card>
       </Col>
       <Col xs={24} sm={12} md={6}>
-        <Card bordered={false} style={{ background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)' }}>
+        <Card variant='borderless' style={{ background: 'linear-gradient(135deg, #8B4513 0%, #A0522D 100%)' }}>
           <Statistic
             title={<span style={{ color: '#F5F5DC' }}>Legendary</span>}
             value={stats.legendary}

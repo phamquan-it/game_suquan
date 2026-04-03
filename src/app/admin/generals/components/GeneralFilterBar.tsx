@@ -14,7 +14,6 @@ import {
   Typography
 } from 'antd';
 import { SearchOutlined, FilterOutlined, ReloadOutlined } from '@ant-design/icons';
-import { HeroRarity, HeroElement, HeroType, HeroStatus } from '@/types/general';
 const { Text } = Typography;
 
 const { Option } = Select;

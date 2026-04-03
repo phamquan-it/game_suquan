@@ -2,24 +2,24 @@
 
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { 
-  Card, 
-  Row, 
-  Col, 
-  Typography, 
-  Tag, 
-  Space, 
-  Button, 
-  Descriptions, 
+import {
+  Card,
+  Row,
+  Col,
+  Typography,
+  Tag,
+  Space,
+  Button,
+  Descriptions,
   Statistic,
   Progress,
-  Timeline 
+  Timeline
 } from 'antd';
-import { 
-  ArrowLeftOutlined, 
-  EditOutlined, 
+import {
+  ArrowLeftOutlined,
+  EditOutlined,
   GiftOutlined,
-  MessageOutlined 
+  MessageOutlined
 } from '@ant-design/icons';
 import { Ban } from 'lucide-react';
 
@@ -89,8 +89,8 @@ export default function PlayerDetailPage() {
       {/* Header */}
       <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 24 }}>
         <Space>
-          <Button 
-            icon={<ArrowLeftOutlined />} 
+          <Button
+            icon={<ArrowLeftOutlined />}
             onClick={() => router.back()}
           >
             Quay lại
@@ -112,7 +112,7 @@ export default function PlayerDetailPage() {
       <Row gutter={[16, 16]}>
         {/* Thông tin cơ bản */}
         <Col xs={24} lg={8}>
-          <Card title="Thông tin cơ bản" bordered={false}>
+          <Card title="Thông tin cơ bản" variant='borderless'>
             <Descriptions column={1} size="small">
               <Descriptions.Item label="ID">{player.id}</Descriptions.Item>
               <Descriptions.Item label="Email">{player.email}</Descriptions.Item>
@@ -140,7 +140,7 @@ export default function PlayerDetailPage() {
 
         {/* Thống kê chiến đấu */}
         <Col xs={24} lg={8}>
-          <Card title="Thống kê chiến đấu" bordered={false}>
+          <Card title="Thống kê chiến đấu" variant='borderless'>
             <Space direction="vertical" style={{ width: '100%' }} size="large">
               <Statistic
                 title="Sức mạnh"
@@ -148,11 +148,11 @@ export default function PlayerDetailPage() {
                 suffix="points"
                 valueStyle={{ color: '#8B0000' }}
               />
-              
+
               <div>
                 <Text strong>Tỷ lệ thắng</Text>
-                <Progress 
-                  percent={player.winRate} 
+                <Progress
+                  percent={player.winRate}
                   strokeColor={{
                     '0%': '#DC143C',
                     '50%': '#D4AF37',
@@ -202,7 +202,7 @@ export default function PlayerDetailPage() {
 
         {/* Hoạt động gần đây */}
         <Col xs={24} lg={8}>
-          <Card title="Hoạt động gần đây" bordered={false}>
+          <Card title="Hoạt động gần đây" variant='borderless'>
             <Timeline items={activityTimeline} />
           </Card>
         </Col>
@@ -211,7 +211,7 @@ export default function PlayerDetailPage() {
       {/* Thông tin hệ thống */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24}>
-          <Card title="Thông tin hệ thống" bordered={false}>
+          <Card title="Thông tin hệ thống" variant='borderless'>
             <Row gutter={[16, 16]}>
               <Col xs={24} sm={8}>
                 <Statistic
@@ -242,9 +242,9 @@ export default function PlayerDetailPage() {
                 <Statistic
                   title="Số vi phạm"
                   value={player.violations}
-                  valueStyle={{ 
-                    color: player.violations === 0 ? '#2E8B57' : 
-                           player.violations <= 2 ? '#FF8C00' : '#DC143C' 
+                  valueStyle={{
+                    color: player.violations === 0 ? '#2E8B57' :
+                      player.violations <= 2 ? '#FF8C00' : '#DC143C'
                   }}
                 />
               </Col>

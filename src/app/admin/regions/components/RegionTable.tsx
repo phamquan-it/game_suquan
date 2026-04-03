@@ -2,12 +2,12 @@
 
 import React, { useState } from 'react';
 import { Table, Button, Space, Popconfirm, Tag, Tooltip } from 'antd';
-import { 
-  EditOutlined, 
-  DeleteOutlined, 
+import {
+  EditOutlined,
+  DeleteOutlined,
   PlusOutlined,
   BankOutlined,
-  ExpandOutlined 
+  ExpandOutlined
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { Region } from '../types/region.types';
@@ -23,7 +23,7 @@ interface RegionTableProps {
 const RegionTable: React.FC<RegionTableProps> = ({ onViewBuildings, onViewExpansion }) => {
   const { data: regions, isLoading } = useRegions();
   const deleteRegion = useDeleteRegion();
-  
+
   const [modalVisible, setModalVisible] = useState(false);
   const [editingRegion, setEditingRegion] = useState<Region | null>(null);
 
@@ -42,7 +42,7 @@ const RegionTable: React.FC<RegionTableProps> = ({ onViewBuildings, onViewExpans
       dataIndex: 'id',
       key: 'id',
       render: (id: string) => (
-        <Tag color="royalNavy" style={{ fontFamily: 'monospace' }}>
+        <Tag color="default" style={{ fontFamily: 'monospace' }}>
           {id}
         </Tag>
       ),
@@ -75,25 +75,25 @@ const RegionTable: React.FC<RegionTableProps> = ({ onViewBuildings, onViewExpans
       render: (_, record) => (
         <Space size="middle">
           <Tooltip title="Manage Buildings">
-            <Button 
-              type="text" 
-              icon={<BankOutlined />} 
+            <Button
+              type="text"
+              icon={<BankOutlined />}
               onClick={() => onViewBuildings(record)}
               style={{ color: '#003366' }}
             />
           </Tooltip>
           <Tooltip title="Expansion Costs">
-            <Button 
-              type="text" 
-              icon={<ExpandOutlined />} 
+            <Button
+              type="text"
+              icon={<ExpandOutlined />}
               onClick={() => onViewExpansion(record)}
               style={{ color: '#D4AF37' }}
             />
           </Tooltip>
           <Tooltip title="Edit Region">
-            <Button 
-              type="text" 
-              icon={<EditOutlined />} 
+            <Button
+              type="text"
+              icon={<EditOutlined />}
               onClick={() => handleEdit(record)}
               style={{ color: '#8B0000' }}
             />
@@ -107,10 +107,10 @@ const RegionTable: React.FC<RegionTableProps> = ({ onViewBuildings, onViewExpans
             okButtonProps={{ danger: true }}
           >
             <Tooltip title="Delete Region">
-              <Button 
-                type="text" 
-                danger 
-                icon={<DeleteOutlined />} 
+              <Button
+                type="text"
+                danger
+                icon={<DeleteOutlined />}
               />
             </Tooltip>
           </Popconfirm>

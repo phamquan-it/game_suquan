@@ -2,12 +2,10 @@
 
 import React, { useState } from 'react';
 import { Form, Input, Button, Checkbox, Divider, Alert } from 'antd';
-import { 
-  UserOutlined, 
-  LockOutlined, 
+import {
+  UserOutlined,
+  LockOutlined,
   LoginOutlined,
-  GoogleOutlined,
-  GithubOutlined 
 } from '@ant-design/icons';
 import { useLogin } from '../hooks/useAuth';
 import ForgotPassword from './ForgotPassword';
@@ -18,15 +16,32 @@ interface LoginFormProps {
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
   const [form] = Form.useForm();
-  const login = useLogin();
+  const { mutateAsync, isPending, error } = useLogin();
   const [forgotPasswordVisible, setForgotPasswordVisible] = useState(false);
 
   const handleSubmit = async (values: any) => {
-    await login.mutateAsync(values);
+    try {
+      await mutateAsync(values);
+      // Optionally add success handling (e.g., redirect, show success message)
+    } catch (err) {
+      // Error is already handled in the hook
+      console.error('Login failed:', err);
+    }
   };
 
   return (
     <>
+      {error && (
+        <Alert
+          message="Đăng nhập thất bại"
+          description={error}
+          type="error"
+          showIcon
+          closable
+          style={{ marginBottom: 24, borderRadius: 8 }}
+        />
+      )}
+
       <Form
         form={form}
         layout="vertical"
@@ -36,14 +51,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <Form.Item
           name="email"
           rules={[
-            { required: true, message: 'Please enter your email' },
-            { type: 'email', message: 'Please enter a valid email' }
+            { required: true, message: 'Vui lòng nhập email của bạn' },
+            { type: 'email', message: 'Vui lòng nhập email hợp lệ' }
           ]}
         >
-          <Input 
+          <Input
             prefix={<UserOutlined style={{ color: '#8B4513' }} />}
             placeholder="Email"
-            style={{ 
+            style={{
               borderColor: '#CD7F32',
               borderRadius: 8
             }}
@@ -52,12 +67,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
 
         <Form.Item
           name="password"
-          rules={[{ required: true, message: 'Please enter your password' }]}
+          rules={[{ required: true, message: 'Vui lòng nhập mật khẩu của bạn' }]}
         >
           <Input.Password
             prefix={<LockOutlined style={{ color: '#8B4513' }} />}
-            placeholder="Password"
-            style={{ 
+            placeholder="Mật khẩu"
+            style={{
               borderColor: '#CD7F32',
               borderRadius: 8
             }}
@@ -67,14 +82,14 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
         <Form.Item>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Checkbox style={{ color: '#8B4513' }}>
-              Remember me
+              Ghi nhớ đăng nhập
             </Checkbox>
-            <Button 
-              type="link" 
+            <Button
+              type="link"
               onClick={() => setForgotPasswordVisible(true)}
               style={{ color: '#8B0000' }}
             >
-              Forgot password?
+              Quên mật khẩu?
             </Button>
           </div>
         </Form.Item>
@@ -85,8 +100,8 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
             htmlType="submit"
             block
             icon={<LoginOutlined />}
-            loading={login.isPending}
-            style={{ 
+            loading={isPending}
+            style={{
               height: 48,
               backgroundColor: '#8B0000',
               border: '2px solid #D4AF37',
@@ -94,52 +109,26 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
               fontSize: 16
             }}
           >
-            Enter the Realm
+            Đăng nhập
           </Button>
         </Form.Item>
 
         <Divider style={{ borderColor: '#D4AF37', color: '#8B4513' }}>
-          Or continue with
+          Chưa có tài khoản?
         </Divider>
 
-        <div style={{ display: 'flex', gap: 16 }}>
+        <div style={{ textAlign: 'center' }}>
           <Button
-            block
-            icon={<GoogleOutlined />}
-            style={{ 
-              borderColor: '#CD7F32',
-              color: '#8B4513',
-              height: 40
-            }}
-          >
-            Google
-          </Button>
-          <Button
-            block
-            icon={<GithubOutlined />}
-            style={{ 
-              borderColor: '#CD7F32',
-              color: '#8B4513',
-              height: 40
-            }}
-          >
-            GitHub
-          </Button>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: 24 }}>
-          <span style={{ color: '#8B4513' }}>New to the realm? </span>
-          <Button 
-            type="link" 
+            type="link"
             onClick={onSwitchToRegister}
-            style={{ color: '#8B0000', fontWeight: 'bold' }}
+            style={{ color: '#8B0000', fontWeight: 'bold', fontSize: 16 }}
           >
-            Create your Warlord
+            Tạo tài khoản ngay
           </Button>
         </div>
       </Form>
 
-      <ForgotPassword 
+      <ForgotPassword
         visible={forgotPasswordVisible}
         onClose={() => setForgotPasswordVisible(false)}
       />

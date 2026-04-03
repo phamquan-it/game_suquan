@@ -1,4 +1,4 @@
-import { Region } from "../../regions/types/region";
+import { Region } from "../../regions/types/region.types";
 
 // Base types for referenced entities
 interface Unit {

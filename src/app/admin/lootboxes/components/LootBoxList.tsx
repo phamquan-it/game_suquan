@@ -29,7 +29,7 @@ import { useLootBoxes, useDeleteLootBox } from '../hooks/useLootBoxQueries';
 import { LOOT_BOX_TYPES, LOOT_BOX_CATEGORIES, LOOT_BOX_TIERS } from '../constants/lootbox.constants';
 import { LootBoxFilters } from '../types/lootbox.types';
 import type { ColumnsType } from 'antd/es/table';
-import { LootBox } from '../types';
+import { LootBox } from '@/lib/types/loot-box';
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -38,7 +38,7 @@ export default function LootBoxList() {
   const router = useRouter();
   const [filters, setFilters] = useState<LootBoxFilters>({});
   const [pagination, setPagination] = useState({ page: 1, limit: 10 });
-  
+
   const { data, isLoading } = useLootBoxes(filters, pagination);
   const deleteMutation = useDeleteLootBox();
 
@@ -99,11 +99,11 @@ export default function LootBoxList() {
         const now = new Date();
         const availableFrom = record.available_from ? new Date(record.available_from) : null;
         const availableUntil = record.available_until ? new Date(record.available_until) : null;
-        
+
         let isAvailable = true;
         if (availableFrom && availableFrom > now) isAvailable = false;
         if (availableUntil && availableUntil < now) isAvailable = false;
-        
+
         return (
           <Space direction="vertical" size="small">
             <Badge status={isAvailable ? 'success' : 'error'} text={isAvailable ? 'Available' : 'Unavailable'} />

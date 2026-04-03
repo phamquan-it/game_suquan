@@ -3,8 +3,8 @@
 
 import React from 'react';
 import { Row, Col, Card, Statistic, Progress } from 'antd';
-import { 
-  TeamOutlined, 
+import {
+  TeamOutlined,
   CrownOutlined,
   RiseOutlined,
   StarOutlined
@@ -29,9 +29,9 @@ const UnitStats: React.FC<UnitStatsProps> = ({
   return (
     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
       <Col xs={24} sm={12} lg={6}>
-        <Card 
-          bordered={false}
-          style={{ 
+        <Card
+          variant='borderless'
+          style={{
             background: 'linear-gradient(135deg, #003366 0%, #004080 100%)',
             color: 'white',
             borderRadius: theme.token?.borderRadius,
@@ -47,9 +47,9 @@ const UnitStats: React.FC<UnitStatsProps> = ({
       </Col>
 
       <Col xs={24} sm={12} lg={6}>
-        <Card 
-          bordered={false}
-          style={{ 
+        <Card
+          variant='borderless'
+          style={{
             background: 'linear-gradient(135deg, #8B0000 0%, #A52A2A 100%)',
             color: 'white',
             borderRadius: theme.token?.borderRadius,
@@ -65,9 +65,9 @@ const UnitStats: React.FC<UnitStatsProps> = ({
       </Col>
 
       <Col xs={24} sm={12} lg={6}>
-        <Card 
-          bordered={false}
-          style={{ 
+        <Card
+          variant='borderless'
+          style={{
             background: 'linear-gradient(135deg, #2E8B57 0%, #3CB371 100%)',
             color: 'white',
             borderRadius: theme.token?.borderRadius,
@@ -83,9 +83,9 @@ const UnitStats: React.FC<UnitStatsProps> = ({
       </Col>
 
       <Col xs={24} sm={12} lg={6}>
-        <Card 
-          bordered={false}
-          style={{ 
+        <Card
+          variant='borderless'
+          style={{
             background: 'linear-gradient(135deg, #D4AF37 0%, #FFD700 100%)',
             color: 'white',
             borderRadius: theme.token?.borderRadius,
@@ -102,10 +102,10 @@ const UnitStats: React.FC<UnitStatsProps> = ({
       </Col>
 
       <Col span={24}>
-        <Card 
+        <Card
           title="Units by Type"
-          bordered={false}
-          style={{ 
+          variant='borderless'
+          style={{
             borderRadius: theme.token?.borderRadius,
             border: `1px solid ${theme.token?.colorBorder}`,
           }}
@@ -118,8 +118,8 @@ const UnitStats: React.FC<UnitStatsProps> = ({
                     <span style={{ textTransform: 'capitalize' }}>{type}</span>
                     <span>{count}</span>
                   </div>
-                  <Progress 
-                    percent={Math.round((count / totalUnits) * 100)} 
+                  <Progress
+                    percent={Math.round((count / totalUnits) * 100)}
                     showInfo={false}
                     strokeColor={theme.token?.colorPrimary}
                   />

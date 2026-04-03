@@ -1,7 +1,7 @@
 // app/admin/achievements/components/AchievementRewards.tsx
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Table,
   Button,
@@ -28,15 +28,17 @@ import {
   GoldOutlined,
   SaveOutlined,
 } from '@ant-design/icons';
-import { AchievementReward } from '../types';
 import { supabase } from '@/utils/supabase/client';
+import { AchievementReward, Currency } from './rewards/types';
+import { useItems } from '../hooks/use-items';
+import { useRewards } from '../hooks/useRewards';
 
 const { Text } = Typography;
 const { Option } = Select;
 
 interface AchievementRewardsProps {
-  achievementId?: string;
-  currencies: any[];
+  requirementId?: string | number;
+  currencies: Currency[];
   readOnly?: boolean;
 }
 
@@ -49,60 +51,44 @@ interface RewardFormData {
 }
 
 export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
-  achievementId,
+  requirementId,
   currencies,
   readOnly = false,
 }) => {
-  const [rewards, setRewards] = useState<AchievementReward[]>([]);
-  const [loading, setLoading] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [editingReward, setEditingReward] = useState<AchievementReward | null>(null);
   const [rewardType, setRewardType] = useState<'item' | 'currency'>('item');
   const [form] = Form.useForm();
+  const [refreshKey, setRefreshKey] = useState(0);
 
+  // Sử dụng hook để lấy danh sách vật phẩm
+  const { items, loading: itemsLoading, error: itemsError } = useItems();
+
+  // Hiển thị lỗi nếu fetch items thất bại
   useEffect(() => {
-    if (achievementId) {
-      fetchRewards();
-    }
-  }, [achievementId]);
+    if (itemsError) message.error('Không thể tải danh sách vật phẩm: ' + itemsError);
+  }, [itemsError]);
 
-  const fetchRewards = async () => {
-    if (!achievementId) return;
+  // Hook lấy phần thưởng
+  const {
+    rewards,
+    loading: hookLoading,
+    error: hookError,
+  } = useRewards({
+    requirementId: requirementId ? Number(requirementId) : undefined,
+    enabled: !!requirementId,
+  });
 
-    try {
-      setLoading(true);
-      
-      // Fetch rewards with related data
-      const { data: rewardsData, error: rewardsError } = await supabase
-        .from('achievement_rewards')
-        .select(`
-          *,
-          item:item_id (
-            id,
-            name,
-            rarity
-          ),
-          currency:currency_type (
-            currency_type,
-            name,
-            icon
-          )
-        `)
-        .eq('requirement_id', null); // For achievement-level rewards
+  // Hiển thị lỗi từ hook phần thưởng
+  useEffect(() => {
+    if (hookError) message.error(hookError);
+  }, [hookError]);
 
-      if (rewardsError) throw rewardsError;
-      setRewards(rewardsData || []);
-    } catch (error) {
-      console.error('Error fetching rewards:', error);
-      message.error('Failed to load rewards');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const refreshRewards = useCallback(() => setRefreshKey(prev => prev + 1), []);
 
   const handleSave = async (values: RewardFormData) => {
-    if (!achievementId) {
-      message.warning('Please save the achievement first before adding rewards');
+    if (!requirementId) {
+      message.warning('Vui lòng lưu thành tựu trước khi thêm phần thưởng');
       return;
     }
 
@@ -110,6 +96,7 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
       const rewardData: any = {
         quantity: values.quantity,
         probability: values.probability,
+        requirement_id: Number(requirementId),
       };
 
       if (values.reward_type === 'item') {
@@ -122,33 +109,28 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
 
       let error;
       if (editingReward) {
-        // Update existing reward
         const { error: updateError } = await supabase
           .from('achievement_rewards')
           .update(rewardData)
           .eq('id', editingReward.id);
         error = updateError;
       } else {
-        // Create new reward
         const { error: insertError } = await supabase
           .from('achievement_rewards')
-          .insert([{
-            ...rewardData,
-            requirement_id: null, // Achievement-level reward
-          }]);
+          .insert([rewardData]);
         error = insertError;
       }
 
       if (error) throw error;
 
-      message.success(`Reward ${editingReward ? 'updated' : 'added'} successfully`);
+      message.success(`Phần thưởng ${editingReward ? 'cập nhật' : 'thêm mới'} thành công`);
       setModalVisible(false);
       form.resetFields();
       setEditingReward(null);
-      fetchRewards();
+      refreshRewards();
     } catch (error) {
-      console.error('Error saving reward:', error);
-      message.error('Failed to save reward');
+      console.error('Lỗi lưu phần thưởng:', error);
+      message.error('Lưu phần thưởng thất bại');
     }
   };
 
@@ -158,81 +140,67 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
         .from('achievement_rewards')
         .delete()
         .eq('id', id);
-
       if (error) throw error;
-
-      message.success('Reward deleted successfully');
-      fetchRewards();
+      message.success('Xóa phần thưởng thành công');
+      refreshRewards();
     } catch (error) {
-      console.error('Error deleting reward:', error);
-      message.error('Failed to delete reward');
+      console.error('Lỗi xóa phần thưởng:', error);
+      message.error('Xóa phần thưởng thất bại');
     }
   };
 
-  const getRewardIcon = (record: AchievementReward) => {
-    if (record.item_id) {
-      return <GiftOutlined className="text-purple-600" />;
-    }
-    if (record.currency_type) {
-      return <GoldOutlined className="text-yellow-600" />;
-    }
-    return null;
-  };
+  // Hàm hỗ trợ hiển thị
+  const getRewardIcon = (record: AchievementReward) => (
+    record.item_id ? <GiftOutlined className="text-purple-600" /> :
+      record.currency_type ? <GoldOutlined className="text-yellow-600" /> : null
+  );
 
   const getRewardName = (record: AchievementReward) => {
-    if (record.item_id) {
-      return (record as any).item?.name || record.item_id;
-    }
-    if (record.currency_type) {
-      const currency = currencies.find(c => c.currency_type === record.currency_type);
-      return currency?.name || record.currency_type;
-    }
-    return 'Unknown';
+    if (record.item) return record.item.name;
+    if (record.currency) return record.currency.name;
+    return record.item_id || record.currency_type || 'Không xác định';
   };
+
+  const getRewardRarity = (record: AchievementReward) => record.item?.rarity;
 
   const columns = [
     {
-      title: 'Type',
-      dataIndex: 'item_id',
+      title: 'Loại',
       key: 'type',
       width: 100,
       render: (_: any, record: AchievementReward) => (
         <Space>
           {getRewardIcon(record)}
           <Tag color={record.item_id ? 'purple' : 'gold'}>
-            {record.item_id ? 'Item' : 'Currency'}
+            {record.item_id ? 'Vật phẩm' : 'Tiền tệ'}
           </Tag>
         </Space>
       ),
     },
     {
-      title: 'Reward',
+      title: 'Phần thưởng',
       key: 'name',
       render: (_: any, record: AchievementReward) => (
         <Space direction="vertical" size={0}>
           <Text strong>{getRewardName(record)}</Text>
-          {record.item_id && (record as any).item?.rarity && (
-            <Tag color="blue" >
-              {(record as any).item.rarity}
-            </Tag>
+          {record.item && record.item.rarity && (
+            <Tag color="blue">{record.item.rarity}</Tag>
           )}
         </Space>
       ),
     },
     {
-      title: 'Quantity',
+      title: 'Số lượng',
       dataIndex: 'quantity',
       key: 'quantity',
       width: 100,
       align: 'right' as const,
       render: (quantity: number) => (
-        <Text strong className="text-green-600">
-          x{quantity.toLocaleString()}
-        </Text>
+        <Text strong className="text-green-600">x{quantity.toLocaleString()}</Text>
       ),
     },
     {
-      title: 'Probability',
+      title: 'Xác suất',
       dataIndex: 'probability',
       key: 'probability',
       width: 150,
@@ -249,12 +217,12 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
       ),
     },
     {
-      title: 'Actions',
+      title: 'Thao tác',
       key: 'actions',
       width: 120,
       render: (_: any, record: AchievementReward) => (
         <Space>
-          <Tooltip title="Edit">
+          <Tooltip title="Sửa">
             <Button
               type="text"
               icon={<EditOutlined />}
@@ -273,14 +241,14 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
             />
           </Tooltip>
           <Popconfirm
-            title="Delete reward"
-            description="Are you sure you want to delete this reward?"
+            title="Xóa phần thưởng"
+            description="Bạn có chắc chắn muốn xóa phần thưởng này không?"
             onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
+            okText="Có"
+            cancelText="Không"
             okButtonProps={{ danger: true }}
           >
-            <Tooltip title="Delete">
+            <Tooltip title="Xóa">
               <Button type="text" danger icon={<DeleteOutlined />} />
             </Tooltip>
           </Popconfirm>
@@ -289,19 +257,11 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
     },
   ];
 
-  // Mock items data - replace with actual items from your database
-  const mockItems = [
-    { id: 'item_1', name: 'Legendary Sword', rarity: 'legendary' },
-    { id: 'item_2', name: 'Health Potion', rarity: 'common' },
-    { id: 'item_3', name: 'Dragon Armor', rarity: 'epic' },
-    { id: 'item_4', name: 'Mystic Amulet', rarity: 'rare' },
-  ];
-
   return (
     <Card className="bg-gray-50">
       <div className="flex justify-between items-center mb-4">
         <Text strong className="text-lg">
-          Completion Rewards ({rewards.length})
+          Phần thưởng hoàn thành ({rewards.length})
         </Text>
         {!readOnly && (
           <Button
@@ -313,17 +273,17 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
               setRewardType('item');
               setModalVisible(true);
             }}
-            disabled={!achievementId}
+            disabled={!requirementId}
           >
-            Add Reward
+            Thêm phần thưởng
           </Button>
         )}
       </div>
 
-      {!achievementId && (
+      {!requirementId && (
         <div className="bg-yellow-50 border border-yellow-200 rounded p-4 mb-4">
           <Text type="warning">
-            Please save the achievement first to add rewards
+            Vui lòng lưu thành tựu trước khi thêm phần thưởng
           </Text>
         </div>
       )}
@@ -331,15 +291,15 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
       <Table
         columns={columns}
         dataSource={rewards}
-        loading={loading}
+        loading={hookLoading}
         rowKey="id"
         pagination={false}
         size="small"
-        locale={{ emptyText: 'No rewards added yet' }}
+        locale={{ emptyText: 'Chưa có phần thưởng nào' }}
       />
 
       <Modal
-        title={editingReward ? 'Edit Reward' : 'Add Reward'}
+        title={editingReward ? 'Sửa phần thưởng' : 'Thêm phần thưởng'}
         open={modalVisible}
         onCancel={() => {
           setModalVisible(false);
@@ -353,60 +313,40 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
           form={form}
           layout="vertical"
           onFinish={handleSave}
-          initialValues={{
-            reward_type: 'item',
-            quantity: 1,
-            probability: 1.0,
-          }}
+          initialValues={{ reward_type: 'item', quantity: 1, probability: 1.0 }}
         >
-          <Form.Item
-            name="reward_type"
-            label="Reward Type"
-            rules={[{ required: true }]}
-          >
-            <Radio.Group
-              onChange={(e) => setRewardType(e.target.value)}
-              className="w-full"
-            >
+          <Form.Item name="reward_type" label="Loại phần thưởng" rules={[{ required: true, message: 'Vui lòng chọn loại' }]}>
+            <Radio.Group onChange={(e) => setRewardType(e.target.value)} className="w-full">
               <Radio.Button value="item" className="w-1/2 text-center">
-                <GiftOutlined /> Item
+                <GiftOutlined /> Vật phẩm
               </Radio.Button>
               <Radio.Button value="currency" className="w-1/2 text-center">
-                <GoldOutlined /> Currency
+                <GoldOutlined /> Tiền tệ
               </Radio.Button>
             </Radio.Group>
           </Form.Item>
 
           {rewardType === 'item' ? (
-            <Form.Item
-              name="item_id"
-              label="Item"
-              rules={[{ required: true, message: 'Please select an item' }]}
-            >
+            <Form.Item name="item_id" label="Vật phẩm" rules={[{ required: true, message: 'Vui lòng chọn vật phẩm' }]}>
               <Select
-                placeholder="Select item"
+                placeholder="Chọn vật phẩm"
                 showSearch
                 optionFilterProp="children"
+                loading={itemsLoading}
               >
-                {mockItems.map(item => (
+                {items.map(item => (
                   <Option key={item.id} value={item.id}>
                     <Space>
                       <span>{item.name}</span>
-                      <Tag color="blue" >
-                        {item.rarity}
-                      </Tag>
+                      <Tag color="blue">{item.rarity}</Tag>
                     </Space>
                   </Option>
                 ))}
               </Select>
             </Form.Item>
           ) : (
-            <Form.Item
-              name="currency_type"
-              label="Currency"
-              rules={[{ required: true, message: 'Please select currency' }]}
-            >
-              <Select placeholder="Select currency">
+            <Form.Item name="currency_type" label="Tiền tệ" rules={[{ required: true, message: 'Vui lòng chọn loại tiền tệ' }]}>
+              <Select placeholder="Chọn tiền tệ">
                 {currencies.map(currency => (
                   <Option key={currency.currency_type} value={currency.currency_type}>
                     <Space>
@@ -419,29 +359,19 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
             </Form.Item>
           )}
 
-          <Form.Item
-            name="quantity"
-            label="Quantity"
-            rules={[{ required: true, message: 'Please enter quantity' }]}
-          >
-            <InputNumber
-              min={1}
-              className="w-full"
-              placeholder="Enter quantity"
-            />
+          <Form.Item name="quantity" label="Số lượng" rules={[{ required: true, message: 'Vui lòng nhập số lượng' }]}>
+            <InputNumber min={1} className="w-full" placeholder="Nhập số lượng" />
           </Form.Item>
 
           <Form.Item
             name="probability"
-            label="Drop Probability"
+            label="Xác suất rơi"
             rules={[
-              { required: true, message: 'Please enter probability' },
+              { required: true, message: 'Vui lòng nhập xác suất' },
               {
                 validator: (_, value) => {
-                  if (value >= 0 && value <= 1) {
-                    return Promise.resolve();
-                  }
-                  return Promise.reject(new Error('Probability must be between 0 and 1'));
+                  if (value >= 0 && value <= 1) return Promise.resolve();
+                  return Promise.reject(new Error('Xác suất phải nằm trong khoảng 0 đến 1'));
                 },
               },
             ]}
@@ -451,25 +381,16 @@ export const AchievementRewards: React.FC<AchievementRewardsProps> = ({
               max={1}
               step={0.01}
               className="w-full"
-              placeholder="Enter probability (0-1)"
+              placeholder="Nhập xác suất (0-1)"
             />
           </Form.Item>
 
           <Divider />
-
           <Form.Item className="mb-0">
             <Space className="w-full justify-end">
-              <Button
-                onClick={() => {
-                  setModalVisible(false);
-                  setEditingReward(null);
-                  form.resetFields();
-                }}
-              >
-                Cancel
-              </Button>
+              <Button onClick={() => setModalVisible(false)}>Hủy</Button>
               <Button type="primary" htmlType="submit" icon={<SaveOutlined />}>
-                {editingReward ? 'Update' : 'Add'} Reward
+                {editingReward ? 'Cập nhật' : 'Thêm'} phần thưởng
               </Button>
             </Space>
           </Form.Item>

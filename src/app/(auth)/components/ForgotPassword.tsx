@@ -16,7 +16,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ visible, onClose }) => 
   const [emailSent, setEmailSent] = React.useState(false);
 
   const handleSubmit = async (values: { email: string }) => {
-    await forgotPassword.mutateAsync(values.email);
+    //  await forgotPassword.mutateAsync(values.email);
     setEmailSent(true);
   };
 
@@ -47,8 +47,8 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ visible, onClose }) => 
             showIcon
             style={{ marginBottom: 24 }}
           />
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             onClick={handleClose}
             style={{ backgroundColor: '#8B0000' }}
           >
@@ -73,7 +73,7 @@ const ForgotPassword: React.FC<ForgotPasswordProps> = ({ visible, onClose }) => 
               { type: 'email', message: 'Please enter a valid email' }
             ]}
           >
-            <Input 
+            <Input
               prefix={<MailOutlined style={{ color: '#8B4513' }} />}
               placeholder="Email"
               style={{ borderColor: '#CD7F32' }}

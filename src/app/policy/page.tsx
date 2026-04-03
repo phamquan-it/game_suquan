@@ -33,7 +33,6 @@ import {
   Eye,
   EyeOff,
   Download,
-  Print,
   Calendar,
   Clock,
   User,
@@ -437,9 +436,9 @@ const PolicyPage = () => {
           </Space>
         </Space>
 
-        <Button 
-          type="link" 
-          size="small" 
+        <Button
+          type="link"
+          size="small"
           style={{ color: right.color, padding: 0 }}
         >
           Thực hiện quyền <ChevronRight size={14} />
@@ -519,19 +518,19 @@ const PolicyPage = () => {
                       Chính Sách Bảo Mật Toàn Diện
                     </Title>
                   </div>
-                  
-                  <Paragraph style={{ 
-                    color: 'white', 
+
+                  <Paragraph style={{
+                    color: 'white',
                     fontSize: '1.1rem',
                     lineHeight: '1.6'
                   }}>
-                    Cam kết bảo vệ quyền riêng tư và dữ liệu người dùng. Chúng tôi tuân thủ nghiêm ngặt 
-                    các tiêu chuẩn bảo mật quốc tế và luật pháp địa phương để đảm bảo thông tin của bạn 
+                    Cam kết bảo vệ quyền riêng tư và dữ liệu người dùng. Chúng tôi tuân thủ nghiêm ngặt
+                    các tiêu chuẩn bảo mật quốc tế và luật pháp địa phương để đảm bảo thông tin của bạn
                     luôn được an toàn.
                   </Paragraph>
 
                   <Space>
-                    <Button 
+                    <Button
                       type="primary"
                       icon={<BookOpen size={16} />}
                       style={{
@@ -543,7 +542,7 @@ const PolicyPage = () => {
                     >
                       Đọc Chính Sách Đầy Đủ
                     </Button>
-                    <Button 
+                    <Button
                       icon={<Download size={16} />}
                       style={{
                         background: 'rgba(212, 175, 55, 0.2)',
@@ -556,7 +555,7 @@ const PolicyPage = () => {
                   </Space>
                 </Space>
               </Col>
-              
+
               <Col xs={24} lg={8}>
                 <div style={{
                   background: 'rgba(212, 175, 55, 0.1)',
@@ -649,8 +648,8 @@ const PolicyPage = () => {
                     children: (
                       <Space direction="vertical" style={{ width: '100%' }} size="large">
                         {/* Policy Header */}
-                        <div style={{ 
-                          padding: '20px', 
+                        <div style={{
+                          padding: '20px',
                           background: 'linear-gradient(135deg, #F5F5DC, #F1E8D6)',
                           borderRadius: '8px',
                           border: `2px solid ${category.color}`
@@ -691,7 +690,7 @@ const PolicyPage = () => {
                               type="info"
                               showIcon
                             />
-                            
+
                             <Title level={4}>Các Loại Cookie Chúng Tôi Sử Dụng</Title>
                             {cookiePolicy.types.map((cookie, index) => (
                               <CookieTypeCard key={index} cookie={cookie} />
@@ -734,10 +733,10 @@ const PolicyPage = () => {
                           >
                             <Title level={5}>Chi Tiết Kỹ Thuật</Title>
                             <Paragraph style={{ fontSize: '12px', color: '#666' }}>
-                              • Mã hóa: AES-256 cho dữ liệu nhạy cảm<br/>
-                              • Lưu trữ: Máy chủ an toàn với chứng chỉ SSL<br/>
-                              • Truy cập: Kiểm soát theo nguyên tắc least privilege<br/>
-                              • Sao lưu: Hệ thống backup tự động hàng ngày<br/>
+                              • Mã hóa: AES-256 cho dữ liệu nhạy cảm<br />
+                              • Lưu trữ: Máy chủ an toàn với chứng chỉ SSL<br />
+                              • Truy cập: Kiểm soát theo nguyên tắc least privilege<br />
+                              • Sao lưu: Hệ thống backup tự động hàng ngày<br />
                               • Giám sát: Hệ thống phát hiện xâm nhập 24/7
                             </Paragraph>
                           </Card>
@@ -870,7 +869,7 @@ const PolicyPage = () => {
       </Content>
 
       {/* Footer */}
-      <Footer style={{ 
+      <Footer style={{
         background: '#003366',
         color: '#D4AF37',
         padding: '40px 20px',
@@ -886,11 +885,11 @@ const PolicyPage = () => {
               Cam kết bảo vệ quyền riêng tư và dữ liệu của người dùng
             </Paragraph>
           </Space>
-          
+
           <Divider style={{ borderColor: '#D4AF37', margin: '30px 0' }} />
-          
+
           <Text style={{ color: 'rgba(212, 175, 55, 0.6)' }}>
-            © 2024 12 Sứ Quân. Tất cả quyền được bảo lưu. | 
+            © 2024 12 Sứ Quân. Tất cả quyền được bảo lưu. |
             <Button type="link" style={{ color: '#D4AF37', padding: '0 8px' }}>Liên Hệ DPO</Button>
             <Button type="link" style={{ color: '#D4AF37', padding: '0 8px' }}>Khiếu Nại</Button>
             <Button type="link" style={{ color: '#D4AF37', padding: '0 8px' }}>Báo Cáo Lỗi</Button>

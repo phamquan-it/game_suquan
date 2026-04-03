@@ -133,16 +133,16 @@ const GeneralTable: React.FC = () => {
         const power = calculatePower(record);
         return (
           <Space direction="vertical" size="small" style={{ width: '100%' }}>
-            <Badge 
-              status="processing" 
+            <Badge
+              status="processing"
               text={
                 <Text type="secondary">
                   ATK: {record.current_attack} | DEF: {record.current_defense}
                 </Text>
-              } 
+              }
             />
-            <Progress 
-              percent={Math.round((record.experience / record.required_exp) * 100)} 
+            <Progress
+              percent={Math.round((record.experience / record.required_exp) * 100)}
               size="small"
               format={(percent) => `${percent}% EXP`}
             />

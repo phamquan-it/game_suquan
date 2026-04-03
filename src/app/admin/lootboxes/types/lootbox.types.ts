@@ -1,35 +1,18 @@
 // app/admin/lootboxes/types/lootbox.types.ts
-import { 
-  LootBox, 
-  LootBoxRewardTable, 
-  LootBoxRewardPool,
-  LootBoxRewardItem,
-  LootBoxPitySystem,
-  LootBoxPityCounter,
-  LootBoxPityItem,
-  LootBoxGuaranteedDrop,
-  LootBoxGuaranteedReward,
-  LootBoxStreakBonus,
-  LootBoxStreakBonusTier,
-  LootBoxStreakItem,
-  LootBoxFirstTimeBonus,
-  LootBoxFirstTimeReward,
-  Rarity,
-  RewardType,
-  LootBoxType,
-  LootBoxCategory,
-  LootBoxTier,
-  DistributionType
-} from '@/types/lootbox';
+
+import { LootBox, LootBoxCategory, LootBoxTier, LootBoxType } from "@/lib/types/loot-box";
+import { DistributionType, Rarity, RewardType } from ".";
+
 
 export interface LootBoxFilters {
-  search?: string;
-  type?: LootBoxType;
-  category?: LootBoxCategory;
-  tier?: LootBoxTier;
-  season?: string;
-  event?: string;
-  isActive?: boolean;
+  search?: string | any;
+  type?: LootBoxType | any;
+  category?: LootBoxCategory | any;
+  tier?: LootBoxTier | any;
+  season?: string | any;
+  event?: string | any;
+  isActive?: boolean | any;
+  dateRange?: any
 }
 
 export interface PaginationParams {
@@ -125,3 +108,41 @@ export interface FirstTimeBonusFormData {
   multiplier: number;
   rewards: string[]; // reward_item_ids
 }
+
+
+
+export type LootBoxRewardItem = {
+  id: string;
+  reward_pool_id: string;
+  reward_type:
+  | 'item'
+  | 'currency'
+  | 'experience'
+  | 'vip_points'
+  | 'alliance_points'
+  | 'cosmetic'
+  | 'title'
+  | 'mount'
+  | 'pet'
+  | 'skill_point'
+  | 'stat_point';
+
+  item_id: string | null;
+  currency_type: string | null;
+
+  amount_min: number;
+  amount_max: number;
+  weight: number;
+
+  rarity:
+  | 'common'
+  | 'uncommon'
+  | 'rare'
+  | 'epic'
+  | 'legendary'
+  | 'mythic'
+  | 'ancient'
+  | 'divine';
+
+  bound_type: 'none' | 'account' | 'character';
+};
