@@ -5,7 +5,7 @@ import { supabase } from './utils/supabase/client'
 export async function proxy(request: NextRequest) {
   // --- cookies example ---
   const allCookies = request.cookies.getAll()
-  console.log('All cookies:', allCookies)
+ // console.log('All cookies:', allCookies)
 
   const response = NextResponse.next()
   response.cookies.set('vercel', 'fast')
@@ -16,11 +16,11 @@ export async function proxy(request: NextRequest) {
 
   if (supabaseAccessToken) {
     loggedIn = true
-    console.log('Supabase access token:', supabaseAccessToken)
+ //   console.log('Supabase access token:', supabaseAccessToken)
     try {
       // verify session
       const { data: userData, error } = await supabase.auth.getUser(supabaseAccessToken)
-      console.log('User data:', userData)
+    //  console.log('User data:', userData)
       if (!error && userData.user) {
         console.log('User logged in:', userData.user.email)
       }
