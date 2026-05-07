@@ -5,20 +5,19 @@ import { Crown } from "lucide-react";
 import { motion } from "framer-motion";
 
 const { Title, Text } = Typography;
-
 const charactersData = [
-    { name: 'Ngô Xương Xí', power: 95, intelligence: 88, territory: 'Bình Kiều' },
-    { name: 'Đỗ Cảnh Thạc', power: 92, intelligence: 85, territory: 'Đỗ Động' },
-    { name: 'Kiều Công Hãn', power: 89, intelligence: 90, territory: 'Phong Châu' },
-    { name: 'Nguyễn Khoan', power: 87, intelligence: 86, territory: 'Tam Đái' },
-    { name: 'Ngô Nhật Khánh', power: 85, intelligence: 80, territory: 'Đại La' },
-    { name: 'Phạm Bạch Hổ', power: 88, intelligence: 82, territory: 'Đường Lâm' },
-    { name: 'Đinh Bộ Lĩnh', power: 98, intelligence: 95, territory: 'Hoa Lư' },
-    { name: 'Ngô Quyền', power: 97, intelligence: 93, territory: 'Cổ Loa' },
-    { name: 'Lý Thường Kiệt', power: 96, intelligence: 94, territory: 'Thăng Long' },
-    { name: 'Trần Hưng Đạo', power: 99, intelligence: 97, territory: 'Thăng Long' },
-    { name: 'Lê Lợi', power: 98, intelligence: 96, territory: 'Lam Sơn' },
-    { name: 'Nguyễn Trãi', power: 90, intelligence: 100, territory: 'Lam Sơn' },
+  { name: 'Ngô Xương Xí', power: 88, intelligence: 82, territory: 'Bình Kiều' },
+  { name: 'Đỗ Cảnh Thạc', power: 90, intelligence: 85, territory: 'Đỗ Động' },
+  { name: 'Kiều Công Hãn', power: 86, intelligence: 88, territory: 'Phong Châu' },
+  { name: 'Nguyễn Khoan', power: 85, intelligence: 80, territory: 'Tam Đái' },
+  { name: 'Ngô Nhật Khánh', power: 87, intelligence: 78, territory: 'Đường Lâm' }, // Đường Lâm (Sơn Tây)
+  { name: 'Lý Khuê', power: 84, intelligence: 86, territory: 'Siêu Loại' },
+  { name: 'Phạm Bạch Hổ', power: 89, intelligence: 81, territory: 'Đằng Châu' },
+  { name: 'Kiều Thuận', power: 83, intelligence: 84, territory: 'Hồi Hồ' },
+  { name: 'Trần Lãm', power: 86, intelligence: 83, territory: 'Bố Hải Khẩu' },
+  { name: 'Nguyễn Siêu', power: 82, intelligence: 88, territory: 'Tây Phù Liệt' },
+  { name: 'Nguyễn Thủ Tiệp', power: 81, intelligence: 85, territory: 'Tiên Du' },
+  { name: 'Đinh Bộ Lĩnh', power: 98, intelligence: 95, territory: 'Hoa Lư' }, // Người dẹp loạn 12 sứ quân
 ];
 
 export default function CharactersSection() {

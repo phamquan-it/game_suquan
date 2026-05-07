@@ -48,6 +48,7 @@ const { Panel } = Collapse;
 
 // Category icons and colors
 const categoryConfig: Record<QuestCategory, { icon: React.ReactNode; color: string; label: string }> = {
+  main: { icon: <TrophyOutlined />, color: '#FF8C00', label: 'Chính' },
   daily: { icon: <ClockCircleOutlined />, color: '#2E8B57', label: 'Hàng ngày' },
   weekly: { icon: <StarOutlined />, color: '#FF8C00', label: 'Hàng tuần' },
   alliance: { icon: <TeamOutlined />, color: '#1E90FF', label: 'Liên minh' },
@@ -120,6 +121,7 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
       weekly: 0,
       alliance: 0,
       event: 0,
+      main: 0
     };
     quests.forEach(q => {
       byCategory[q.category] = (byCategory[q.category] || 0) + 1;

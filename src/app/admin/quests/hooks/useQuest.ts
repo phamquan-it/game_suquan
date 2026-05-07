@@ -8,7 +8,7 @@ import { supabase } from '@/utils/supabase/client';
 // ==============================
 
 export type QuestStatus = 'active' | 'inactive';
-export type QuestCategory = 'daily' | 'weekly' | 'alliance' | 'event';
+export type QuestCategory = 'daily' | 'weekly' | 'alliance' | 'event' | 'main';
 export type QuestDifficulty = 'easy' | 'medium' | 'hard' | 'expert';
 export type QuestType =
   | 'login'
