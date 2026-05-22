@@ -400,6 +400,11 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
       children: null,
     },
     {
+      key: 'main',
+      label: 'Chính',
+      children: null,
+    },
+    {
       key: 'daily',
       label: 'Hàng ngày',
       children: null,
