@@ -1,5 +1,5 @@
 "use client"
-// QuestManagement.tsx
+// QuestManagement.tsx (Updated with Reward Management)
 import React, { useState, useMemo } from 'react';
 import {
   Table,
@@ -23,6 +23,9 @@ import {
   Tooltip,
   Collapse,
   Descriptions,
+  List,
+  Empty,
+  Radio,
 } from 'antd';
 import {
   PlusOutlined,
@@ -38,9 +41,13 @@ import {
   SettingOutlined,
   DownOutlined,
   RightOutlined,
+  GiftOutlined,
+  GoldOutlined,
+  ExperimentOutlined,
+  DeleteOutlined as DeleteIcon,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
-import { GameAction, Quest, QuestCategory, QuestDifficulty, QuestStatus, QuestType, useQuests } from '../hooks/useQuest';
+import { GameAction, Quest, QuestCategory, QuestDifficulty, QuestStatus, QuestType, QuestReward, useQuests } from '../hooks/useQuest';
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -76,12 +83,30 @@ const questTypeLabels: Record<QuestType, string> = {
   beauty: 'Làm đẹp',
 };
 
+// Reward type config
+const rewardTypeConfig: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
+  item: { icon: <GiftOutlined />, color: '#D4AF37', label: 'Vật phẩm' },
+  currency: { icon: <GoldOutlined />, color: '#FF8C00', label: 'Tiền tệ' },
+  exp: { icon: <ExperimentOutlined />, color: '#2E8B57', label: 'EXP' },
+};
+
 // Form item for requirement
 interface RequirementFormItem {
   id?: string;
   requirement_type: string;
   target: number;
   meta: Record<string, unknown>;
+}
+
+// Form item for reward
+interface RewardFormItem {
+  id?: string;
+  reward_type: 'item' | 'currency' | 'exp';
+  item_id?: string | null;
+  amount: number;
+  currency_type?: string | null;
+  experience_amount?: number | null;
+  description?: string | null;
 }
 
 interface QuestManagementProps {
@@ -97,12 +122,15 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
     updateItem,
     deleteItem,
     fetchData,
+    addReward,
+    removeReward,
   } = useQuests();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [editingQuest, setEditingQuest] = useState<Quest | null>(null);
   const [form] = Form.useForm();
   const [requirements, setRequirements] = useState<RequirementFormItem[]>([]);
+  const [rewards, setRewards] = useState<RewardFormItem[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
 
@@ -134,6 +162,7 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
     setEditingQuest(null);
     form.resetFields();
     setRequirements([]);
+    setRewards([]);
     setModalVisible(true);
   };
 
@@ -159,6 +188,17 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
         meta: r.meta,
       }))
     );
+    setRewards(
+      quest.rewards.map(r => ({
+        id: r.id,
+        reward_type: r.reward_type,
+        item_id: r.item_id,
+        amount: r.amount,
+        currency_type: r.currency_type,
+        experience_amount: r.experience_amount,
+        description: r.description,
+      }))
+    );
     setModalVisible(true);
   };
 
@@ -181,6 +221,14 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
           requirement_type: r.requirement_type,
           target: r.target,
           meta: r.meta || {},
+        })),
+        rewards: rewards.map(r => ({
+          reward_type: r.reward_type,
+          amount: r.amount,
+          item_id: r.item_id || null,
+          currency_type: r.currency_type || null,
+          experience_amount: r.experience_amount || null,
+          description: r.description || null,
         })),
       };
 
@@ -208,6 +256,16 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
     }
   };
 
+  // Handle delete reward
+  const handleDeleteReward = async (questId: string, rewardId: string) => {
+    try {
+      await removeReward(questId, rewardId);
+      message.success('Xóa phần thưởng thành công');
+    } catch (error) {
+      message.error('Xóa phần thưởng thất bại');
+    }
+  };
+
   // Add requirement
   const addRequirement = () => {
     setRequirements([
@@ -230,6 +288,51 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
     const updated = [...requirements];
     updated[index] = { ...updated[index], [field]: value };
     setRequirements(updated);
+  };
+
+  // Add reward
+  const addRewardItem = () => {
+    setRewards([
+      ...rewards,
+      {
+        reward_type: 'item',
+        amount: 1,
+        item_id: null,
+        currency_type: null,
+        experience_amount: null,
+        description: null,
+      },
+    ]);
+  };
+
+  // Remove reward from form
+  const removeRewardItem = (index: number) => {
+    setRewards(rewards.filter((_, i) => i !== index));
+  };
+
+  // Update reward
+  const updateReward = (index: number, field: keyof RewardFormItem, value: any) => {
+    const updated = [...rewards];
+    updated[index] = { ...updated[index], [field]: value };
+
+    // Reset type-specific fields
+    if (field === 'reward_type') {
+      if (value === 'exp') {
+        updated[index].experience_amount = 100;
+        updated[index].item_id = null;
+        updated[index].currency_type = null;
+      } else if (value === 'item') {
+        updated[index].item_id = null;
+        updated[index].currency_type = null;
+        updated[index].experience_amount = null;
+      } else if (value === 'currency') {
+        updated[index].currency_type = null;
+        updated[index].item_id = null;
+        updated[index].experience_amount = null;
+      }
+    }
+
+    setRewards(updated);
   };
 
   // Expanded row render
@@ -261,6 +364,30 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
               </ul>
             ) : (
               'Không có yêu cầu'
+            )}
+          </Descriptions.Item>
+          <Descriptions.Item label="Phần thưởng" span={2}>
+            {record.rewards.length > 0 ? (
+              <ul style={{ margin: 0, paddingLeft: 20 }}>
+                {record.rewards.map((reward, idx) => (
+                  <li key={idx}>
+                    <Tag color={rewardTypeConfig[reward.reward_type]?.color} icon={rewardTypeConfig[reward.reward_type]?.icon}>
+                      {rewardTypeConfig[reward.reward_type]?.label}
+                    </Tag>
+                    <strong>
+                      {reward.reward_type === 'exp'
+                        ? ` +${reward.experience_amount} EXP`
+                        : reward.reward_type === 'currency'
+                          ? ` +${reward.amount} ${reward.currency_type}`
+                          : ` +${reward.amount} x ${reward.item_id}`
+                      }
+                    </strong>
+                    {reward.description && <span style={{ color: '#666', marginLeft: 8 }}>({reward.description})</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              'Không có phần thưởng'
             )}
           </Descriptions.Item>
           <Descriptions.Item label="Giới hạn hoàn thành">
@@ -328,11 +455,25 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
       ),
     },
     {
-      title: 'Cấp độ',
-      key: 'level_range',
-      width: 100,
+      title: 'Phần thưởng',
+      key: 'rewards',
+      width: 200,
       render: (_: unknown, record: Quest) => (
-        <Text>{record.min_level} - {record.max_level}</Text>
+        <Space direction="vertical" size={4}>
+          {record.rewards.slice(0, 2).map((reward, idx) => (
+            <Tag key={idx} color={rewardTypeConfig[reward.reward_type]?.color} icon={rewardTypeConfig[reward.reward_type]?.icon}>
+              {reward.reward_type === 'exp'
+                ? `${reward.experience_amount} EXP`
+                : reward.reward_type === 'currency'
+                  ? `${reward.amount} ${reward.currency_type}`
+                  : `${reward.amount} item`
+              }
+            </Tag>
+          ))}
+          {record.rewards.length > 2 && (
+            <Tag>+{record.rewards.length - 2} phần thưởng khác</Tag>
+          )}
+        </Space>
       ),
     },
     {
@@ -394,36 +535,12 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
 
   // Tab items for the Tabs component
   const tabItems = [
-    {
-      key: 'all',
-      label: 'Tất cả nhiệm vụ',
-      children: null,
-    },
-    {
-      key: 'main',
-      label: 'Chính',
-      children: null,
-    },
-    {
-      key: 'daily',
-      label: 'Hàng ngày',
-      children: null,
-    },
-    {
-      key: 'weekly',
-      label: 'Hàng tuần',
-      children: null,
-    },
-    {
-      key: 'alliance',
-      label: 'Liên minh',
-      children: null,
-    },
-    {
-      key: 'event',
-      label: 'Sự kiện',
-      children: null,
-    },
+    { key: 'all', label: 'Tất cả nhiệm vụ', children: null },
+    { key: 'main', label: 'Chính', children: null },
+    { key: 'daily', label: 'Hàng ngày', children: null },
+    { key: 'weekly', label: 'Hàng tuần', children: null },
+    { key: 'alliance', label: 'Liên minh', children: null },
+    { key: 'event', label: 'Sự kiện', children: null },
   ];
 
   return (
@@ -535,7 +652,7 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
         open={modalVisible}
         onOk={handleSave}
         onCancel={() => setModalVisible(false)}
-        width={800}
+        width={900}
         okText="Lưu"
         cancelText="Hủy"
         okButtonProps={{ style: { background: '#8B0000' } }}
@@ -639,19 +756,237 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
             </Col>
           </Row>
 
+          {/* Requirements Section */}
+// Thay thế phần Requirements Section và Rewards Section trong Modal
+
+          {/* Requirements Section */}
           <Divider orientation="left">
             <Space>
               <SettingOutlined />
               Yêu cầu nhiệm vụ
               <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={addRequirement}>
-                Thêm
+                Thêm yêu cầu
               </Button>
             </Space>
           </Divider>
 
           {requirements.length === 0 ? (
             <Text type="secondary" style={{ display: 'block', textAlign: 'center', padding: 16 }}>
-              Chưa có yêu cầu nào. Nhấn "Thêm" để tạo yêu cầu cho nhiệm vụ.
+              Chưa có yêu cầu nào. Nhấn "Thêm yêu cầu" để tạo yêu cầu cho nhiệm vụ.
+            </Text>
+          ) : (
+            <Collapse
+              style={{ marginBottom: 12 }}
+              defaultActiveKey={requirements.map((_, idx) => String(idx))}
+              items={requirements.map((req, index) => ({
+                key: String(index),
+                label: (
+                  <Space>
+                    <span>Yêu cầu {index + 1}</span>
+                    {req.requirement_type && (
+                      <Tag color="gold">{req.requirement_type}</Tag>
+                    )}
+                  </Space>
+                ),
+                extra: (
+                  <Button
+                    type="text"
+                    danger
+                    size="small"
+                    icon={<DeleteIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeRequirement(index);
+                    }}
+                  >
+                    Xóa
+                  </Button>
+                ),
+                children: (
+                  <Row gutter={16}>
+                    <Col span={12}>
+                      <Form.Item label="Loại yêu cầu" required>
+                        <Select
+                          value={req.requirement_type}
+                          onChange={(val) => updateRequirement(index, 'requirement_type', val)}
+                          placeholder="Chọn loại hành động"
+                          showSearch
+                        >
+                          {actions.map((action: GameAction) => (
+                            <Option key={action.id} value={action.id}>
+                              {action.description}
+                            </Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                    </Col>
+                    <Col span={12}>
+                      <Form.Item label="Giá trị mục tiêu" required>
+                        <InputNumber
+                          value={req.target}
+                          onChange={(val) => updateRequirement(index, 'target', val)}
+                          min={1}
+                          style={{ width: '100%' }}
+                          placeholder="Số lượng mục tiêu"
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                ),
+              }))}
+            />
+          )}
+
+          {/* Rewards Section */}
+          <Divider orientation="left">
+            <Space>
+              <GiftOutlined />
+              Phần thưởng
+              <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={addRewardItem}>
+                Thêm phần thưởng
+              </Button>
+            </Space>
+          </Divider>
+
+          {rewards.length === 0 ? (
+            <Text type="secondary" style={{ display: 'block', textAlign: 'center', padding: 16 }}>
+              Chưa có phần thưởng nào. Nhấn "Thêm phần thưởng" để thêm quà cho nhiệm vụ.
+            </Text>
+          ) : (
+            <Collapse
+              style={{ marginBottom: 12 }}
+              defaultActiveKey={rewards.map((_, idx) => String(idx))}
+              items={rewards.map((reward, index) => ({
+                key: String(index),
+                label: (
+                  <Space>
+                    <span>Phần thưởng {index + 1}</span>
+                    {reward.reward_type && (
+                      <Tag color={rewardTypeConfig[reward.reward_type]?.color} icon={rewardTypeConfig[reward.reward_type]?.icon}>
+                        {rewardTypeConfig[reward.reward_type]?.label}
+                      </Tag>
+                    )}
+                  </Space>
+                ),
+                extra: (
+                  <Button
+                    type="text"
+                    danger
+                    size="small"
+                    icon={<DeleteIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeRewardItem(index);
+                    }}
+                  >
+                    Xóa
+                  </Button>
+                ),
+                children: (
+                  <>
+                    <Row gutter={16}>
+                      <Col span={24}>
+                        <Form.Item label="Loại phần thưởng" required>
+                          <Radio.Group
+                            value={reward.reward_type}
+                            onChange={(e) => updateReward(index, 'reward_type', e.target.value)}
+                          >
+                            <Radio value="item">
+                              <Space><GiftOutlined /> Vật phẩm</Space>
+                            </Radio>
+                            <Radio value="currency">
+                              <Space><GoldOutlined /> Tiền tệ</Space>
+                            </Radio>
+                            <Radio value="exp">
+                              <Space><ExperimentOutlined /> EXP</Space>
+                            </Radio>
+                          </Radio.Group>
+                        </Form.Item>
+                      </Col>
+                    </Row>
+
+                    {reward.reward_type === 'item' && (
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Form.Item label="ID Vật phẩm" required>
+                            <Input
+                              value={reward.item_id || ''}
+                              onChange={(e) => updateReward(index, 'item_id', e.target.value)}
+                              placeholder="Nhập item_id (vd: gold_coin)"
+                            />
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item label="Số lượng" required>
+                            <InputNumber
+                              value={reward.amount}
+                              onChange={(val) => updateReward(index, 'amount', val)}
+                              min={1}
+                              style={{ width: '100%' }}
+                            />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    )}
+
+                    {reward.reward_type === 'currency' && (
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Form.Item label="Loại tiền tệ" required>
+                            <Select
+                              value={reward.currency_type}
+                              onChange={(val) => updateReward(index, 'currency_type', val)}
+                              placeholder="Chọn loại tiền tệ"
+                            >
+                              <Option value="gold">Vàng</Option>
+                              <Option value="diamond">Kim cương</Option>
+                              <Option value="silver">Bạc</Option>
+                            </Select>
+                          </Form.Item>
+                        </Col>
+                        <Col span={12}>
+                          <Form.Item label="Số lượng" required>
+                            <InputNumber
+                              value={reward.amount}
+                              onChange={(val) => updateReward(index, 'amount', val)}
+                              min={1}
+                              style={{ width: '100%' }}
+                            />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    )}
+
+                    {reward.reward_type === 'exp' && (
+                      <Row gutter={16}>
+                        <Col span={12}>
+                          <Form.Item label="Số EXP" required>
+                            <InputNumber
+                              value={reward.experience_amount}
+                              onChange={(val) => updateReward(index, 'experience_amount', val)}
+                              min={1}
+                              style={{ width: '100%' }}
+                            />
+                          </Form.Item>
+                        </Col>
+                      </Row>
+                    )}
+
+                    <Form.Item label="Mô tả">
+                      <Input
+                        value={reward.description || ''}
+                        onChange={(e) => updateReward(index, 'description', e.target.value)}
+                        placeholder="Mô tả phần thưởng (không bắt buộc)"
+                      />
+                    </Form.Item>
+                  </>
+                ),
+              }))}
+            />
+          )}
+          {requirements.length === 0 ? (
+            <Text type="secondary" style={{ display: 'block', textAlign: 'center', padding: 16 }}>
+              Chưa có yêu cầu nào. Nhấn "Thêm yêu cầu" để tạo yêu cầu cho nhiệm vụ.
             </Text>
           ) : (
             requirements.map((req, index) => (
@@ -671,6 +1006,7 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
                       type="text"
                       danger
                       size="small"
+                      icon={<DeleteIcon />}
                       onClick={(e) => {
                         e.stopPropagation();
                         removeRequirement(index);
@@ -709,6 +1045,151 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
                       </Form.Item>
                     </Col>
                   </Row>
+                </Panel>
+              </Collapse>
+            ))
+          )}
+
+          {/* Rewards Section */}
+          <Divider orientation="left">
+            <Space>
+              <GiftOutlined />
+              Phần thưởng
+              <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={addRewardItem}>
+                Thêm phần thưởng
+              </Button>
+            </Space>
+          </Divider>
+
+          {rewards.length === 0 ? (
+            <Text type="secondary" style={{ display: 'block', textAlign: 'center', padding: 16 }}>
+              Chưa có phần thưởng nào. Nhấn "Thêm phần thưởng" để thêm quà cho nhiệm vụ.
+            </Text>
+          ) : (
+            rewards.map((reward, index) => (
+              <Collapse key={index} style={{ marginBottom: 12 }} defaultActiveKey={['1']}>
+                <Panel
+                  key={'reward' + index}
+                  header={
+                    <Space>
+                      <span>Phần thưởng {index + 1}</span>
+                      {reward.reward_type && (
+                        <Tag color={rewardTypeConfig[reward.reward_type]?.color} icon={rewardTypeConfig[reward.reward_type]?.icon}>
+                          {rewardTypeConfig[reward.reward_type]?.label}
+                        </Tag>
+                      )}
+                    </Space>
+                  }
+                  extra={
+                    <Button
+                      type="text"
+                      danger
+                      size="small"
+                      icon={<DeleteIcon />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRewardItem(index);
+                      }}
+                    >
+                      Xóa
+                    </Button>
+                  }
+                >
+                  <Row gutter={16}>
+                    <Col span={24}>
+                      <Form.Item label="Loại phần thưởng" required>
+                        <Radio.Group
+                          value={reward.reward_type}
+                          onChange={(e) => updateReward(index, 'reward_type', e.target.value)}
+                        >
+                          <Radio value="item">
+                            <Space><GiftOutlined /> Vật phẩm</Space>
+                          </Radio>
+                          <Radio value="currency">
+                            <Space><GoldOutlined /> Tiền tệ</Space>
+                          </Radio>
+                          <Radio value="exp">
+                            <Space><ExperimentOutlined /> EXP</Space>
+                          </Radio>
+                        </Radio.Group>
+                      </Form.Item>
+                    </Col>
+                  </Row>
+
+                  {reward.reward_type === 'item' && (
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item label="ID Vật phẩm" required>
+                          <Input
+                            value={reward.item_id || ''}
+                            onChange={(e) => updateReward(index, 'item_id', e.target.value)}
+                            placeholder="Nhập item_id (vd: gold_coin)"
+                          />
+                        </Form.Item>
+                      </Col>
+                      <Col span={12}>
+                        <Form.Item label="Số lượng" required>
+                          <InputNumber
+                            value={reward.amount}
+                            onChange={(val) => updateReward(index, 'amount', val)}
+                            min={1}
+                            style={{ width: '100%' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  )}
+
+                  {reward.reward_type === 'currency' && (
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item label="Loại tiền tệ" required>
+                          <Select
+                            value={reward.currency_type}
+                            onChange={(val) => updateReward(index, 'currency_type', val)}
+                            placeholder="Chọn loại tiền tệ"
+                          >
+                            <Option value="gold">Vàng</Option>
+                            <Option value="diamond">Kim cương</Option>
+                            <Option value="silver">Bạc</Option>
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                      <Col span={12}>
+                        <Form.Item label="Số lượng" required>
+                          <InputNumber
+                            value={reward.amount}
+                            onChange={(val) => updateReward(index, 'amount', val)}
+                            min={1}
+                            style={{ width: '100%' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  )}
+
+                  {reward.reward_type === 'exp' && (
+                    <Row gutter={16}>
+                      <Col span={12}>
+                        <Form.Item label="Số EXP" required>
+                          <InputNumber
+                            value={reward.experience_amount}
+                            onChange={(val) => updateReward(index, 'experience_amount', val)}
+                            min={1}
+                            style={{ width: '100%' }}
+                          />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                  )}
+
+                  <Form.Item label="Mô tả">
+                    <Input
+                      value={reward.description || ''}
+                      onChange={(e) => updateReward(index, 'description', e.target.value)}
+                      placeholder="Mô tả phần thưởng (không bắt buộc)"
+                    />
+                  </Form.Item>
                 </Panel>
               </Collapse>
             ))
