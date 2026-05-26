@@ -135,6 +135,24 @@ const menuItems = [
     icon: <SettingOutlined />,
     label: 'Hệ Thống',
   },
+  {
+    key: '/admin/quests/game_actions',
+    icon: <SettingOutlined />,
+    label: 'Game Actions',
+  },
+  {
+    key: '/admin/tblview',
+    icon: <SettingOutlined />,
+    label: 'Table Views',
+  },
+  {
+    key: '/admin/tbl_systems',
+    icon: <SettingOutlined />,
+    label: 'Table Systems',
+  },
+
+
+
 ];
 
 interface AdminSidebarProps {
