@@ -50,12 +50,15 @@ const CATEGORY_OPTIONS = [
   { value: 'stealth', label: 'Tàng hình', color: '#708090' },
 ];
 
-// Hàm kiểm tra ID hợp lệ (chỉ chứa chữ cái, số, dấu gạch dưới, dấu gạch ngang)
+// FIX: Cho phép dấu chấm (.) trong ID
+// Hàm kiểm tra ID hợp lệ (chứa chữ cái, số, dấu gạch dưới, dấu gạch ngang, dấu chấm)
 const isValidId = (id: string): boolean => {
-  const idRegex = /^[a-zA-Z0-9_-]+$/;
+  // SỬA: Thêm dấu chấm vào regex
+  const idRegex = /^[a-zA-Z0-9_.-]+$/;
   return idRegex.test(id);
 };
 
+// FIX: Giữ nguyên dấu chấm, không chuyển đổi thành dấu gạch dưới
 // Hàm chuyển đổi chuỗi thành ID không dấu
 const convertToSlug = (text: string): string => {
   return text
@@ -64,9 +67,11 @@ const convertToSlug = (text: string): string => {
     .replace(/[\u0300-\u036f]/g, '') // Xóa dấu tiếng Việt
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'D')
-    .replace(/[^a-z0-9\s_-]/g, '') // Chỉ giữ chữ cái, số, khoảng trắng, gạch dưới, gạch ngang
+    // SỬA: Cho phép dấu chấm và dấu gạch ngang
+    .replace(/[^a-z0-9\s_.-]/g, '') 
     .replace(/\s+/g, '_') // Thay khoảng trắng bằng gạch dưới
     .replace(/_+/g, '_') // Xóa gạch dưới trùng lặp
+    // KHÔNG chuyển đổi dấu chấm thành dấu gạch dưới
     .replace(/^-+|-+$/g, ''); // Xóa gạch ngang ở đầu và cuối
 };
 
@@ -108,7 +113,8 @@ const GameActionsDashboard: React.FC = () => {
           // Nếu không nhập ID, tự động sinh từ description
           actionId = convertToSlug(values.description);
         } else if (!isValidId(actionId)) {
-          message.error('ID chỉ được chứa chữ cái (a-z, A-Z), số (0-9), dấu gạch dưới (_) và dấu gạch ngang (-)');
+          // FIX: Thông báo lỗi cho phép dấu chấm
+          message.error('ID chỉ được chứa chữ cái (a-z, A-Z), số (0-9), dấu gạch dưới (_), dấu gạch ngang (-) và dấu chấm (.)');
           return;
         }
 
@@ -208,7 +214,7 @@ const GameActionsDashboard: React.FC = () => {
     );
   };
 
-  // Cột của bảng - SỬA LỖI Ở ĐÂY
+  // Cột của bảng
   const columns: ColumnsType<GameAction> = [
     {
       title: 'ID',
@@ -461,15 +467,16 @@ const GameActionsDashboard: React.FC = () => {
             <Form.Item
               name="id"
               label="ID"
-              tooltip="ID chỉ được chứa chữ cái (a-z, A-Z), số (0-9), dấu gạch dưới (_) và dấu gạch ngang (-). Để trống để tự động sinh từ mô tả."
+              tooltip="ID chỉ được chứa chữ cái (a-z, A-Z), số (0-9), dấu gạch dưới (_), dấu gạch ngang (-) và dấu chấm (.). Để trống để tự động sinh từ mô tả."
               rules={[
                 {
                   validator: async (_, value) => {
                     if (!value || value.trim() === '') {
                       return Promise.resolve();
                     }
+                    // FIX: Sử dụng hàm isValidId đã được cập nhật
                     if (!isValidId(value)) {
-                      return Promise.reject('ID chỉ được chứa chữ cái (a-z, A-Z), số (0-9), dấu gạch dưới (_) và dấu gạch ngang (-)');
+                      return Promise.reject('ID chỉ được chứa chữ cái (a-z, A-Z), số (0-9), dấu gạch dưới (_), dấu gạch ngang (-) và dấu chấm (.)');
                     }
                     return Promise.resolve();
                   },
@@ -477,7 +484,7 @@ const GameActionsDashboard: React.FC = () => {
               ]}
             >
               <Input
-                placeholder="Ví dụ: attack_enemy, move_forward, quest_01 (để trống để tự động sinh)"
+                placeholder="Ví dụ: attack.enemy, move.forward, quest.01 (để trống để tự động sinh)"
                 autoComplete="off"
               />
             </Form.Item>

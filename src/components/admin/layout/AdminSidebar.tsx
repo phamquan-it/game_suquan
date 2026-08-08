@@ -23,7 +23,16 @@ import {
   ShopOutlined,
   AccountBookOutlined,
   BarChartOutlined,
-  CommentOutlined
+  CommentOutlined,
+  BookOutlined,
+  SnippetsOutlined,
+  UserSwitchOutlined,
+  ControlOutlined,
+  ApiOutlined,
+  TableOutlined,
+  DatabaseOutlined,
+  FunctionOutlined,
+  ToolOutlined
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -98,11 +107,7 @@ const menuItems = [
         icon: <AccountBookOutlined />,
         label: 'Tiền Tệ',
       },
-      {
-        key: '/admin/economy/market',
-        icon: <ShoppingOutlined />,
-        label: 'Chợ',
-      },
+     
       {
         key: '/admin/economy/transactions',
         icon: <BarChartOutlined />,
@@ -125,31 +130,70 @@ const menuItems = [
     icon: <CommentOutlined />,
     label: 'Chat & Tin Nhắn',
   },
+    {
+    key: '/admin/stories/story',
+    icon: <BookOutlined />,
+    label: 'Quản Lý Truyện',
+    children: [
+      {
+        key: '/admin/stories',
+        icon: <SnippetsOutlined />,
+        label: 'Danh Sách Truyện',
+      },
+      {
+        key: '/admin/stories/characters',
+        icon: <UserSwitchOutlined />,
+        label: 'Nhân Vật',
+      },
+       ],
+  },
   {
     key: '/admin/regions',
     icon: <TagOutlined />,
     label: 'Khu Vực',
   },
   {
-    key: '/admin/system',
+    key: '/admin/system/sys',
     icon: <SettingOutlined />,
     label: 'Hệ Thống',
+    children: [
+      {
+        key: '/admin/system',
+        icon: <ControlOutlined />,
+        label: 'Cài Đặt Chung',
+      },
+      {
+        key: '/admin/quests/game_actions',
+        icon: <ApiOutlined />,
+        label: 'Game Actions',
+      },
+      {
+        key: '/admin/tblview',
+        icon: <TableOutlined />,
+        label: 'Table Views',
+      },
+      {
+        key: '/admin/tbl_systems',
+        icon: <DatabaseOutlined />,
+        label: 'Table Systems',
+      },
+      {
+        key: '/admin/func',
+        icon: <FunctionOutlined />,
+        label: 'Functions',
+      },
+      {
+        key: '/admin/system/tools',
+        icon: <ToolOutlined />,
+        label: 'Công Cụ',
+      },
+      {
+        key: '/admin/system/logs',
+        icon: <HistoryOutlined />,
+        label: 'Nhật Ký',
+      }]
   },
-  {
-    key: '/admin/quests/game_actions',
-    icon: <SettingOutlined />,
-    label: 'Game Actions',
-  },
-  {
-    key: '/admin/tblview',
-    icon: <SettingOutlined />,
-    label: 'Table Views',
-  },
-  {
-    key: '/admin/tbl_systems',
-    icon: <SettingOutlined />,
-    label: 'Table Systems',
-  },
+ 
 
 
 
