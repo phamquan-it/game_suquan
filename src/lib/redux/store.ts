@@ -1,14 +1,15 @@
 import { configureStore } from '@reduxjs/toolkit'
 import { adminApi } from './services/adminApi'
-
+import diagramReducer from './diagramSlice';
 export const makeStore = () => {
-    return configureStore({
-        reducer: {
-            [adminApi.reducerPath]: adminApi.reducer
-        },
-        middleware: (getDefaultMiddleware) =>
-            getDefaultMiddleware().concat(adminApi.middleware),
-    })
+  return configureStore({
+    reducer: {
+      diagram: diagramReducer,
+      [adminApi.reducerPath]: adminApi.reducer
+    },
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(adminApi.middleware),
+  })
 }
 
 

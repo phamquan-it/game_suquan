@@ -342,7 +342,11 @@ const DistroSelectorPopup: React.FC<DistroSelectorPopupProps> = ({
                 border: `1px solid #D4AF37`,
                 boxShadow: '0 2px 8px rgba(139, 69, 19, 0.08)',
               }}
-              bodyStyle={{ padding: '12px 16px' }}
+              styles={{
+                body: {
+                  padding: '12px 16px',
+                }
+              }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                 <CheckCircleOutlined style={{ color: '#2E8B57', fontSize: 18 }} />

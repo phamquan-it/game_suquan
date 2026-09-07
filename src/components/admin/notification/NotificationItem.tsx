@@ -77,7 +77,11 @@ export default function NotificationItem({
           borderColor: '#d6e4ff'
         })
       }}
-      bodyStyle={{ padding: '12px 16px' }}
+      styles={{
+        body: {
+          padding: '12px 16px'
+        }
+      }}
     >
       <Space direction="vertical" style={{ width: '100%' }} size={8}>
         {/* Header */}

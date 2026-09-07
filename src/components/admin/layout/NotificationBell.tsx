@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Badge, Dropdown, Button, Space, Typography, Divider, message } from 'antd';
+import { Badge, Dropdown, Button, Space, Typography, Divider, App } from 'antd';
 import {
   BellOutlined,
   WarningOutlined,
@@ -57,6 +57,9 @@ const formatTime = (timestamp: string): string => {
 };
 
 export default function NotificationBell({ onShowNotificationCenter }: NotificationBellProps) {
+  // Dùng message từ App context (không static) để tránh cảnh báo dynamic theme.
+  const { message } = App.useApp();
+
   const {
     alerts,
     loading,

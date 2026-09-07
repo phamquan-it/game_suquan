@@ -229,8 +229,8 @@ const ResourceTypesTabs: React.FC<ResourceTypesTabsProps> = ({
         boxShadow: '0 4px 12px rgba(139, 69, 19, 0.1)',
         borderColor: '#F1E8D6'
       }}
-      styles={{ body: { padding: 24 } }
-      }    >
+      styles={{ body: { padding: 24 } }}
+    >
       <Tabs
         activeKey={activeCategory}
         onChange={handleTabChange}
@@ -404,7 +404,7 @@ export const ResourceTypesGrid: React.FC<ResourceTypesTabsProps> = ({
                 borderColor: '#F1E8D6',
                 transition: 'all 0.3s'
               }}
-              bodyStyle={{ padding: '16px' }}
+              styles={{ body: { padding: '16px' } }}
             >
               <Space direction="vertical" style={{ width: '100%' }} size={12}>
                 <Space size={12} align="start">

@@ -68,7 +68,7 @@ const convertToSlug = (text: string): string => {
     .replace(/đ/g, 'd')
     .replace(/Đ/g, 'D')
     // SỬA: Cho phép dấu chấm và dấu gạch ngang
-    .replace(/[^a-z0-9\s_.-]/g, '') 
+    .replace(/[^a-z0-9\s_.-]/g, '')
     .replace(/\s+/g, '_') // Thay khoảng trắng bằng gạch dưới
     .replace(/_+/g, '_') // Xóa gạch dưới trùng lặp
     // KHÔNG chuyển đổi dấu chấm thành dấu gạch dưới
@@ -113,7 +113,7 @@ const GameActionsDashboard: React.FC = () => {
           // Nếu không nhập ID, tự động sinh từ description
           actionId = convertToSlug(values.description);
         } else if (!isValidId(actionId)) {
-          // FIX: Thông báo lỗi cho phép dấu chấm
+          // Thông báo lỗi cho phép dấu chấm
           message.error('ID chỉ được chứa chữ cái (a-z, A-Z), số (0-9), dấu gạch dưới (_), dấu gạch ngang (-) và dấu chấm (.)');
           return;
         }

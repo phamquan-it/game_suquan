@@ -27,14 +27,11 @@ import {
   Switch,
   Radio,
   Dropdown,
-  MenuProps,
   Empty,
   Spin,
   notification,
-  TimelineProps,
   Carousel,
   Collapse,
-  Timeline as AntTimeline,
   Steps,
   Calendar,
   Descriptions,
@@ -495,6 +492,7 @@ const SeasonPage = () => {
         color: 'white',
         marginBottom: '24px'
       }}
+      styles={{ body: { padding: '24px' } }}
     >
       <Row gutter={[32, 32]} align="middle">
         <Col xs={24} lg={16}>
@@ -605,6 +603,7 @@ const SeasonPage = () => {
         borderRadius: '12px',
         marginBottom: '24px'
       }}
+      styles={{ body: { padding: '24px' } }}
       title={
         <Space>
           <Gift style={{ color: '#8B0000' }} />
@@ -621,7 +620,7 @@ const SeasonPage = () => {
                 background: index < 3 ? 'linear-gradient(135deg, #FFF9E6, #FFFFFF)' : 'white',
                 height: '100%'
               }}
-              bodyStyle={{ padding: '16px' }}
+              styles={{ body: { padding: '16px' } }}
             >
               <Space direction="vertical" style={{ width: '100%' }} size="middle">
                 <div style={{ textAlign: 'center' }}>
@@ -687,6 +686,7 @@ const SeasonPage = () => {
         borderRadius: '12px',
         marginBottom: '24px'
       }}
+      styles={{ body: { padding: '24px' } }}
       title={
         <Space>
           <Target style={{ color: '#8B0000' }} />
@@ -746,7 +746,7 @@ const SeasonPage = () => {
               background: mission.completed ? 'linear-gradient(135deg, #F6FFED, #FFFFFF)' : 'white',
               opacity: mission.completed ? 0.8 : 1
             }}
-            bodyStyle={{ padding: '16px' }}
+            styles={{ body: { padding: '16px' } }}
           >
             <Row gutter={[16, 16]} align="middle">
               <Col xs={24} md={16}>
@@ -832,6 +832,7 @@ const SeasonPage = () => {
         borderRadius: '12px',
         marginBottom: '24px'
       }}
+      styles={{ body: { padding: '24px' } }}
       title={
         <Space>
           <CalendarDays style={{ color: '#8B0000' }} />
@@ -849,7 +850,7 @@ const SeasonPage = () => {
                   'linear-gradient(135deg, #F6FFED, #FFFFFF)' : 'white',
                 height: '100%'
               }}
-              bodyStyle={{ padding: '16px' }}
+              styles={{ body: { padding: '16px' } }}
             >
               <Space direction="vertical" style={{ width: '100%' }} size="middle">
                 <Space style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -904,8 +905,6 @@ const SeasonPage = () => {
                   block
                   icon={event.status === 'active' ? <Play size={16} /> : <Eye size={16} />}
                   onClick={() => handleJoinEvent(event)}
-                  //   disabled={event.status??'ended' == 'ended'}
-
                   style={{
                     background: event.status === 'active' ?
                       `linear-gradient(135deg, ${getEventTypeColor(event.type)}, #D4AF37)` : undefined,
@@ -930,6 +929,7 @@ const SeasonPage = () => {
         borderRadius: '12px',
         marginBottom: '24px'
       }}
+      styles={{ body: { padding: '24px' } }}
       title={
         <Space>
           <Trophy style={{ color: '#8B0000' }} />
@@ -1019,14 +1019,19 @@ const SeasonPage = () => {
       <Header style={{
         background: 'linear-gradient(135deg, rgba(139, 0, 0, 0.95) 0%, rgba(0, 51, 102, 0.95) 100%)',
         borderBottom: '3px solid #D4AF37',
-        padding: '0 20px'
+        padding: '0 20px',
+        height: 'auto',
+        minHeight: '64px'
       }}>
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           maxWidth: '1200px',
-          margin: '0 auto'
+          margin: '0 auto',
+          padding: '12px 0',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
@@ -1053,7 +1058,7 @@ const SeasonPage = () => {
             </Title>
           </div>
 
-          <Space>
+          <Space wrap>
             <Button
               type="link"
               style={{ color: '#D4AF37', fontWeight: '600' }}
@@ -1147,6 +1152,7 @@ const SeasonPage = () => {
         onCancel={() => setIsEventModalVisible(false)}
         footer={null}
         width={600}
+        styles={{ body: { padding: '24px', maxHeight: '70vh', overflowY: 'auto' } }}
       >
         {selectedEvent && (
           <Space direction="vertical" style={{ width: '100%' }} size="large">
@@ -1200,7 +1206,7 @@ const SeasonPage = () => {
               </Descriptions.Item>
             </Descriptions>
 
-            <Card title="Mô tả sự kiện" size="small">
+            <Card title="Mô tả sự kiện" size="small" styles={{ body: { padding: '16px' } }}>
               <Paragraph>
                 {selectedEvent.description}
               </Paragraph>
@@ -1235,6 +1241,7 @@ const SeasonHistory = () => (
       border: '2px solid #D4AF37',
       borderRadius: '12px'
     }}
+    styles={{ body: { padding: '24px' } }}
     title={
       <Space>
         <History style={{ color: '#8B0000' }} />
@@ -1298,6 +1305,7 @@ const SeasonRules = () => (
       border: '2px solid #D4AF37',
       borderRadius: '12px'
     }}
+    styles={{ body: { padding: '24px' } }}
     title={
       <Space>
         <ScrollText style={{ color: '#8B0000' }} />

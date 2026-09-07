@@ -26,6 +26,7 @@ import {
   List,
   Empty,
   Radio,
+  Switch,
 } from 'antd';
 import {
   PlusOutlined,
@@ -48,6 +49,34 @@ import {
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { GameAction, Quest, QuestCategory, QuestDifficulty, QuestStatus, QuestType, QuestReward, useQuests } from '../hooks/useQuest';
+import { useCreateGameAction } from '../game_actions/useGameAction';
+import type { CreateGameActionInput } from '../game_actions/types';
+
+// Tùy chọn danh mục hành động (dùng cho modal tạo action)
+const ACTION_CATEGORY_OPTIONS: { value: string; label: string }[] = [
+  { value: 'combat', label: 'Chiến đấu' },
+  { value: 'exploration', label: 'Khám phá' },
+  { value: 'social', label: 'Xã hội' },
+  { value: 'crafting', label: 'Chế tạo' },
+  { value: 'quest', label: 'Nhiệm vụ' },
+  { value: 'economy', label: 'Kinh tế' },
+  { value: 'magic', label: 'Phép thuật' },
+  { value: 'stealth', label: 'Tàng hình' },
+];
+
+// Sinh ID không dấu từ mô tả (giữ dấu chấm, gạch dưới, gạch ngang)
+const convertToSlug = (text: string): string => {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .replace(/[^a-z0-9\s_.-]/g, '')
+    .replace(/\s+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^-+|-+$/g, '');
+};
 
 const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
@@ -122,6 +151,7 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
     updateItem,
     deleteItem,
     fetchData,
+    fetchActions,
     addReward,
     removeReward,
   } = useQuests();
@@ -133,6 +163,11 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
   const [rewards, setRewards] = useState<RewardFormItem[]>([]);
   const [activeTab, setActiveTab] = useState<string>('all');
   const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+
+  // State cho modal tạo game action
+  const [actionModalVisible, setActionModalVisible] = useState(false);
+  const [actionForm] = Form.useForm();
+  const createActionMutation = useCreateGameAction();
 
   // Filter quests based on active tab
   const filteredQuests = useMemo(() => {
@@ -253,6 +288,51 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
       message.success('Xóa nhiệm vụ thành công');
     } catch (error) {
       message.error('Xóa nhiệm vụ thất bại');
+    }
+  };
+
+  // Mở modal tạo action
+  const handleOpenActionModal = () => {
+    actionForm.resetFields();
+    actionForm.setFieldsValue({
+      repeatable: true,
+      metadata: '{}',
+    });
+    setActionModalVisible(true);
+  };
+
+  // Tự động sinh ID từ mô tả khi chưa nhập
+  const handleActionDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const description = e.target.value;
+    const currentId = actionForm.getFieldValue('id');
+    if (!currentId || currentId === '') {
+      actionForm.setFieldsValue({ id: convertToSlug(description) });
+    }
+  };
+
+  // Xử lý tạo action
+  const handleCreateAction = async () => {
+    try {
+      const values = await actionForm.validateFields();
+      let actionId = values.id?.trim();
+      if (!actionId) {
+        actionId = convertToSlug(values.description);
+      }
+
+      const input: CreateGameActionInput = {
+        id: actionId,
+        description: values.description,
+        category: values.category,
+        repeatable: values.repeatable ?? true,
+        metadata: values.metadata ? JSON.parse(values.metadata) : {},
+      };
+
+      await createActionMutation.mutateAsync(input);
+      message.success('Tạo action thành công');
+      setActionModalVisible(false);
+      fetchActions(); // Làm mới danh sách action để hiển thị trong yêu cầu nhiệm vụ
+    } catch (error) {
+      message.error(error instanceof Error ? error.message : 'Không thể tạo action');
     }
   };
 
@@ -598,6 +678,13 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
                 style={{ background: '#8B0000', borderColor: '#8B0000' }}
               >
                 Tạo nhiệm vụ
+              </Button>
+              <Button
+                icon={<ThunderboltOutlined />}
+                onClick={handleOpenActionModal}
+                style={{ borderColor: '#D4AF37', color: '#8B4513' }}
+              >
+                Thêm action
               </Button>
             </Space>
           </Col>
@@ -1194,6 +1281,107 @@ const QuestManagement: React.FC<QuestManagementProps> = ({ onSelectQuest }) => {
               </Collapse>
             ))
           )}
+        </Form>
+      </Modal>
+
+      {/* Modal tạo game action */}
+      <Modal
+        title={
+          <Space>
+            <ThunderboltOutlined />
+            <span>Tạo action mới</span>
+          </Space>
+        }
+        open={actionModalVisible}
+        onOk={handleCreateAction}
+        onCancel={() => setActionModalVisible(false)}
+        width={600}
+        okText="Tạo action"
+        cancelText="Hủy"
+        okButtonProps={{ loading: createActionMutation.isPending, style: { background: '#8B0000' } }}
+      >
+        <Form
+          form={actionForm}
+          layout="vertical"
+          initialValues={{
+            repeatable: true,
+            metadata: '{}',
+          }}
+        >
+          <Form.Item
+            name="id"
+            label="ID"
+            tooltip="ID chỉ được chứa chữ cái, số, dấu gạch dưới (_), dấu gạch ngang (-) và dấu chấm (.). Để trống để tự động sinh từ mô tả."
+          >
+            <Input
+              placeholder="Ví dụ: attack.enemy, move.forward (để trống để tự động sinh)"
+              autoComplete="off"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="description"
+            label="Mô tả"
+            rules={[
+              { required: true, message: 'Vui lòng nhập mô tả' },
+              { min: 5, message: 'Mô tả phải có ít nhất 5 ký tự' },
+            ]}
+          >
+            <Input.TextArea
+              rows={3}
+              placeholder="Nhập mô tả chi tiết về hành động trong game..."
+              showCount
+              maxLength={500}
+              onChange={handleActionDescriptionChange}
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="category"
+            label="Danh mục"
+            rules={[{ required: true, message: 'Vui lòng chọn danh mục' }]}
+          >
+            <Select placeholder="Chọn danh mục">
+              {ACTION_CATEGORY_OPTIONS.map((option) => (
+                <Option key={option.value} value={option.value}>
+                  {option.label}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Form.Item
+            name="repeatable"
+            label="Có thể lặp lại"
+            valuePropName="checked"
+          >
+            <Switch checkedChildren="Có" unCheckedChildren="Không" />
+          </Form.Item>
+
+          <Form.Item
+            name="metadata"
+            label="Siêu dữ liệu (JSON)"
+            tooltip="Dữ liệu bổ sung cho hành động dưới dạng JSON"
+            rules={[
+              {
+                validator: async (_, value) => {
+                  if (!value || value.trim() === '') return Promise.resolve();
+                  try {
+                    JSON.parse(value);
+                    return Promise.resolve();
+                  } catch {
+                    return Promise.reject('Định dạng JSON không hợp lệ');
+                  }
+                },
+              },
+            ]}
+          >
+            <Input.TextArea
+              rows={4}
+              placeholder={`{\n  "xp_reward": 100,\n  "required_level": 5\n}`}
+              style={{ fontFamily: 'monospace' }}
+            />
+          </Form.Item>
         </Form>
       </Modal>
     </div>

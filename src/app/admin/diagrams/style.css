@@ -1,0 +1,30 @@
+.arrow {
+  pointer-events: none;
+}
+
+.arrow__path {
+  stroke: #000;
+  fill: transparent;
+  stroke-dasharray: 4 2;
+}
+
+.arrow__head line {
+  stroke: #000;
+  stroke-width: 1px;
+}
+
+#from,
+#to {
+  position: absolute;
+}
+
+#from {
+  left: 50px;
+  top: 20px;
+}
+
+#to {
+  left: 300px;
+  top: 260px;
+}
+

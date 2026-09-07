@@ -323,6 +323,7 @@ const PolicyPage = () => {
         background: 'white',
         marginBottom: '16px'
       }}
+      styles={{ body: { padding: '24px' } }}
     >
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -368,6 +369,7 @@ const PolicyPage = () => {
         border: `1px solid ${cookie.controllable ? '#D4AF37' : '#8B0000'}`,
         marginBottom: '12px'
       }}
+      styles={{ body: { padding: '16px' } }}
     >
       <Row gutter={[16, 16]} align="middle">
         <Col xs={24} md={6}>
@@ -410,7 +412,7 @@ const PolicyPage = () => {
         background: 'white',
         height: '100%'
       }}
-      bodyStyle={{ padding: '16px' }}
+      styles={{ body: { padding: '16px' } }}
     >
       <Space direction="vertical" style={{ width: '100%' }} size="middle">
         <Space>
@@ -452,7 +454,10 @@ const PolicyPage = () => {
       {/* Header */}
       <Header style={{
         background: 'linear-gradient(135deg, rgba(139, 0, 0, 0.95) 0%, rgba(0, 51, 102, 0.95) 100%)',
-        borderBottom: '3px solid #D4AF37'
+        borderBottom: '3px solid #D4AF37',
+        padding: '0 20px',
+        height: 'auto',
+        minHeight: '64px'
       }}>
         <div style={{
           display: 'flex',
@@ -460,7 +465,9 @@ const PolicyPage = () => {
           alignItems: 'center',
           maxWidth: '1200px',
           margin: '0 auto',
-          padding: '0 20px'
+          padding: '12px 0',
+          flexWrap: 'wrap',
+          gap: '12px'
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{
@@ -487,7 +494,7 @@ const PolicyPage = () => {
             </Title>
           </div>
 
-          <Space>
+          <Space wrap>
             <Button type="link" style={{ color: '#D4AF37', fontWeight: '600' }}>Bảo Mật</Button>
             <Button type="link" style={{ color: '#D4AF37', fontWeight: '600' }}>Điều Khoản</Button>
             <Button type="link" style={{ color: '#D4AF37', fontWeight: '600' }}>Cookie</Button>
@@ -506,6 +513,7 @@ const PolicyPage = () => {
               marginBottom: '40px',
               color: 'white'
             }}
+            styles={{ body: { padding: '32px' } }}
           >
             <Row gutter={[32, 32]} align="middle">
               <Col xs={24} lg={16}>
@@ -529,7 +537,7 @@ const PolicyPage = () => {
                     luôn được an toàn.
                   </Paragraph>
 
-                  <Space>
+                  <Space wrap>
                     <Button
                       type="primary"
                       icon={<BookOpen size={16} />}
@@ -594,7 +602,10 @@ const PolicyPage = () => {
           </Card>
 
           {/* Quick Consent */}
-          <Card style={{ border: '2px solid #D4AF37', borderRadius: '12px', marginBottom: '24px' }}>
+          <Card
+            style={{ border: '2px solid #D4AF37', borderRadius: '12px', marginBottom: '24px' }}
+            styles={{ body: { padding: '24px' } }}
+          >
             <Row gutter={[16, 16]} align="middle">
               <Col xs={24} md={16}>
                 <Space direction="vertical" size="small">
@@ -629,6 +640,7 @@ const PolicyPage = () => {
                   borderRadius: '16px',
                   background: 'white'
                 }}
+                styles={{ body: { padding: '24px' } }}
               >
                 <Tabs
                   activeKey={activePolicyTab}
@@ -730,6 +742,7 @@ const PolicyPage = () => {
                               border: '1px solid #D4AF37',
                               background: 'rgba(212, 175, 55, 0.05)'
                             }}
+                            styles={{ body: { padding: '16px' } }}
                           >
                             <Title level={5}>Chi Tiết Kỹ Thuật</Title>
                             <Paragraph style={{ fontSize: '12px', color: '#666' }}>
@@ -757,6 +770,7 @@ const PolicyPage = () => {
                   borderRadius: '12px',
                   marginBottom: '24px'
                 }}
+                styles={{ body: { padding: '24px' } }}
                 title={
                   <Space>
                     <Scale style={{ color: '#8B0000' }} />
@@ -778,6 +792,7 @@ const PolicyPage = () => {
                   borderRadius: '12px',
                   marginBottom: '24px'
                 }}
+                styles={{ body: { padding: '24px' } }}
                 title={
                   <Space>
                     <CheckCircle style={{ color: '#8B0000' }} />
@@ -794,6 +809,7 @@ const PolicyPage = () => {
                         border: `1px solid ${standard.color}`,
                         borderLeft: `4px solid ${standard.color}`
                       }}
+                      styles={{ body: { padding: '12px' } }}
                     >
                       <Space direction="vertical" style={{ width: '100%' }} size="small">
                         <Space style={{ width: '100%', justifyContent: 'space-between' }}>
@@ -826,6 +842,7 @@ const PolicyPage = () => {
                   border: '2px solid #D4AF37',
                   borderRadius: '12px'
                 }}
+                styles={{ body: { padding: '24px' } }}
                 title={
                   <Space>
                     <Clock style={{ color: '#8B0000' }} />
@@ -874,9 +891,10 @@ const PolicyPage = () => {
         color: '#D4AF37',
         padding: '40px 20px',
         borderTop: '3px solid #D4AF37',
-        marginTop: '60px'
+        marginTop: '60px',
+        textAlign: 'center'
       }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <Space direction="vertical" size="large">
             <Title level={4} style={{ color: '#D4AF37', margin: 0 }}>
               12 SỨ QUÂN - CHÍNH SÁCH MINH BẠCH
@@ -909,6 +927,7 @@ const PolicyPage = () => {
         onCancel={() => setIsConsentModalVisible(false)}
         footer={null}
         width={700}
+        styles={{ body: { padding: '24px', maxHeight: '70vh', overflowY: 'auto' } }}
       >
         <Space direction="vertical" style={{ width: '100%' }} size="large">
           <Alert
@@ -918,7 +937,10 @@ const PolicyPage = () => {
             showIcon
           />
 
-          <Card title="Cài Đặt Cookie">
+          <Card
+            title="Cài Đặt Cookie"
+            styles={{ body: { padding: '16px' } }}
+          >
             <Space direction="vertical" style={{ width: '100%' }} size="middle">
               {cookiePolicy.types.map((cookie, index) => (
                 <div key={index} style={{
@@ -945,7 +967,10 @@ const PolicyPage = () => {
             </Space>
           </Card>
 
-          <Card title="Quyền Dữ Liệu">
+          <Card
+            title="Quyền Dữ Liệu"
+            styles={{ body: { padding: '16px' } }}
+          >
             <List
               size="small"
               dataSource={userRights}

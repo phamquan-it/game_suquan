@@ -23,7 +23,6 @@ import {
   Tooltip,
   Image,
   Grid,
-  Rate,
   Collapse,
   FloatButton
 } from 'antd';
@@ -51,11 +50,11 @@ import {
   ClusterOutlined,
   CalendarOutlined,
   IdcardOutlined,
-  PictureOutlined
+  PictureOutlined,
+  SafetyOutlined
 } from '@ant-design/icons';
 import { useRouter, useParams } from 'next/navigation';
 import { BeautyCharacter, BeautySkill, Costume, Jewelry } from '@/types/beauty-system';
-import { Shield } from 'lucide-react';
 import { getAttributeColor, getRarityColor } from '@/lib/utils/beauty-helpers';
 
 const { useBreakpoint } = Grid;
@@ -239,50 +238,64 @@ const BeautyDetailPage = () => {
   };
 
   return (
-    <div className="beauty-detail-page">
+    <div className="beauty-detail-page" style={{ padding: '24px' }}>
       {/* Hero Section */}
       <div
-        className="hero-section bg-[#8B0000] relative rounded-2xl overflow-hidden mb-6"
+        className="hero-section"
         style={{
-          minHeight: '200px'
+          background: 'linear-gradient(135deg, rgba(139, 0, 0, 0.95) 0%, rgba(0, 51, 102, 0.95) 100%)',
+          borderRadius: '16px',
+          overflow: 'hidden',
+          marginBottom: '24px',
+          minHeight: '200px',
+          padding: '24px'
         }}
       >
-        <div className="absolute inset-0 bg-opacity-20"></div>
-        <div className="relative  z-10 p-6 text-white">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex items-center space-x-4 mb-4 lg:mb-0">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{
+            display: 'flex',
+            flexDirection: screens.lg ? 'row' : 'column',
+            alignItems: screens.lg ? 'center' : 'flex-start',
+            justifyContent: 'space-between',
+            gap: '16px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
               <Button
                 icon={<ArrowLeftOutlined />}
                 onClick={() => router.back()}
-                className="bg-white bg-opacity-20 border-white text-white hover:bg-opacity-30"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  color: 'white'
+                }}
               >
                 Quay Lại
               </Button>
               <div>
-                <h1 className="text-3xl font-bold drop-shadow-lg">{character.name}</h1>
-                <p className="text-lg opacity-90 drop-shadow">{character.title}</p>
+                <h1 style={{ fontSize: '28px', fontWeight: 'bold', color: 'white', margin: 0 }}>{character.name}</h1>
+                <p style={{ fontSize: '16px', opacity: 0.9, color: 'white', margin: '4px 0 0 0' }}>{character.title}</p>
               </div>
             </div>
-            <Space>
+            <Space wrap>
               <Tooltip title={isFavorite ? "Bỏ yêu thích" : "Thêm vào yêu thích"}>
                 <Button
                   icon={<HeartOutlined />}
                   type={isFavorite ? "primary" : "default"}
                   danger={isFavorite}
                   onClick={() => handleQuickAction('favorite')}
-                  className="bg-white bg-opacity-20 border-white text-white"
+                  style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.3)', color: 'white' }}
                 />
               </Tooltip>
               <Button
                 icon={<ShareAltOutlined />}
-                className="bg-white bg-opacity-20 border-white text-white"
+                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.3)', color: 'white' }}
               >
                 Chia Sẻ
               </Button>
               <Button
                 icon={<EditOutlined />}
                 onClick={() => handleQuickAction('edit')}
-                className="bg-white bg-opacity-20 border-white text-white"
+                style={{ background: 'rgba(255, 255, 255, 0.2)', border: '1px solid rgba(255, 255, 255, 0.3)', color: 'white' }}
               >
                 Chỉnh Sửa
               </Button>
@@ -296,23 +309,37 @@ const BeautyDetailPage = () => {
         {/* Left Column - Character Profile */}
         <Col xs={24} lg={8}>
           {/* Character Card */}
-          <Card className="profile-card text-center shadow-lg relative overflow-hidden">
+          <Card
+            className="profile-card"
+            style={{
+              textAlign: 'center',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+          >
             <div
-              className="absolute top-0 left-0 right-0 h-2"
-              style={{ background: getRarityGradient(character.rarity) }}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '8px',
+                background: getRarityGradient(character.rarity)
+              }}
             ></div>
 
-            <div className="relative -mt-8 mb-4">
-              <div className="relative inline-block">
+            <div style={{ position: 'relative', marginTop: '-32px', marginBottom: '16px' }}>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
                 <Avatar
                   size={120}
                   src={character.avatar}
-                  className="border-4 border-white shadow-2xl"
+                  style={{ border: '4px solid white', boxShadow: '0 4px 12px rgba(0,0,0,0.2)' }}
                 />
-                <div className="absolute -bottom-2 -right-2">
+                <div style={{ position: 'absolute', bottom: '-8px', right: '-8px' }}>
                   <Tag
                     color={getRarityColor(character.rarity)}
-                    className="font-bold px-3 py-1 rounded-full"
+                    style={{ fontWeight: 'bold', padding: '4px 12px', borderRadius: '12px' }}
                   >
                     <CrownOutlined /> {character.rarity.toUpperCase()}
                   </Tag>
@@ -320,14 +347,14 @@ const BeautyDetailPage = () => {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {/* Level & Progress */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold text-gray-700">Cấp Độ</span>
-                  <div className="flex items-center space-x-1">
-                    <span className="text-xl font-bold text-red-600">Lv.{character.level}</span>
-                    <StarOutlined className="text-yellow-500" />
+              <div style={{ background: '#f5f5f5', borderRadius: '8px', padding: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 600, color: '#4a4a4a' }}>Cấp Độ</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#8B0000' }}>Lv.{character.level}</span>
+                    <StarOutlined style={{ color: '#FAAD14' }} />
                   </div>
                 </div>
                 <Progress
@@ -338,7 +365,7 @@ const BeautyDetailPage = () => {
                   }}
                   showInfo={false}
                 />
-                <div className="text-xs text-gray-500 mt-1">
+                <div style={{ fontSize: '12px', color: '#8c8c8c', marginTop: '4px' }}>
                   {character.experience.toLocaleString()} EXP
                 </div>
               </div>
@@ -346,37 +373,37 @@ const BeautyDetailPage = () => {
               {/* Quick Stats */}
               <Row gutter={[8, 8]}>
                 <Col span={12}>
-                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <RocketOutlined className="text-blue-600 text-xl mb-1" />
-                    <div className="font-bold text-blue-700">{characterStats.missionsCompleted}</div>
-                    <div className="text-xs text-blue-600">Nhiệm Vụ</div>
+                  <div style={{ background: '#e6f7ff', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                    <RocketOutlined style={{ color: '#1890FF', fontSize: '20px', marginBottom: '4px', display: 'block' }} />
+                    <div style={{ fontWeight: 'bold', color: '#1890FF' }}>{characterStats.missionsCompleted}</div>
+                    <div style={{ fontSize: '12px', color: '#1890FF' }}>Nhiệm Vụ</div>
                   </div>
                 </Col>
                 <Col span={12}>
-                  <div className="bg-green-50 rounded-lg p-3 text-center">
-                    <SafetyCertificateOutlined className="text-green-600 text-xl mb-1" />
-                    <div className="font-bold text-green-700">{characterStats.successRate}%</div>
-                    <div className="text-xs text-green-600">Thành Công</div>
+                  <div style={{ background: '#f6ffed', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                    <SafetyCertificateOutlined style={{ color: '#52C41A', fontSize: '20px', marginBottom: '4px', display: 'block' }} />
+                    <div style={{ fontWeight: 'bold', color: '#52C41A' }}>{characterStats.successRate}%</div>
+                    <div style={{ fontSize: '12px', color: '#52C41A' }}>Thành Công</div>
                   </div>
                 </Col>
                 <Col span={12}>
-                  <div className="bg-orange-50 rounded-lg p-3 text-center">
-                    <ThunderboltOutlined className="text-orange-600 text-xl mb-1" />
-                    <div className="font-bold text-orange-700">{characterStats.battleWinRate}%</div>
-                    <div className="text-xs text-orange-600">Thắng Trận</div>
+                  <div style={{ background: '#fff7e6', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                    <ThunderboltOutlined style={{ color: '#FA8C16', fontSize: '20px', marginBottom: '4px', display: 'block' }} />
+                    <div style={{ fontWeight: 'bold', color: '#FA8C16' }}>{characterStats.battleWinRate}%</div>
+                    <div style={{ fontSize: '12px', color: '#FA8C16' }}>Thắng Trận</div>
                   </div>
                 </Col>
                 <Col span={12}>
-                  <div className="bg-purple-50 rounded-lg p-3 text-center">
-                    <TeamOutlined className="text-purple-600 text-xl mb-1" />
-                    <div className="font-bold text-purple-700">{characterStats.interactions}</div>
-                    <div className="text-xs text-purple-600">Tương Tác</div>
+                  <div style={{ background: '#f9f0ff', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+                    <TeamOutlined style={{ color: '#722ED1', fontSize: '20px', marginBottom: '4px', display: 'block' }} />
+                    <div style={{ fontWeight: 'bold', color: '#722ED1' }}>{characterStats.interactions}</div>
+                    <div style={{ fontSize: '12px', color: '#722ED1' }}>Tương Tác</div>
                   </div>
                 </Col>
               </Row>
 
               {/* Quick Actions */}
-              <Space direction="vertical" className="w-full">
+              <Space direction="vertical" style={{ width: '100%' }}>
                 <Button
                   type="primary"
                   icon={<RocketOutlined />}
@@ -384,6 +411,7 @@ const BeautyDetailPage = () => {
                   disabled={character.status !== 'available'}
                   block
                   size="large"
+                  style={{ background: '#8B0000', borderColor: '#8B0000' }}
                 >
                   Giao Nhiệm Vụ
                 </Button>
@@ -393,6 +421,7 @@ const BeautyDetailPage = () => {
                   disabled={character.status !== 'available'}
                   block
                   size="large"
+                  style={{ borderColor: '#D4AF37', color: '#8B0000' }}
                 >
                   Huấn Luyện
                 </Button>
@@ -401,7 +430,10 @@ const BeautyDetailPage = () => {
           </Card>
 
           {/* Character Info */}
-          <Card title="Thông Tin Cá Nhân" className="mt-4 shadow-sm">
+          <Card
+            title="Thông Tin Cá Nhân"
+            style={{ marginTop: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+          >
             <Descriptions column={1} size="small">
               <Descriptions.Item label={<><IdcardOutlined /> ID</>}>
                 <code>{character.id}</code>
@@ -423,36 +455,43 @@ const BeautyDetailPage = () => {
           </Card>
 
           {/* Image Gallery */}
-          <Card title={<><PictureOutlined /> Hình Ảnh</>} className="mt-4 shadow-sm">
+          <Card
+            title={<><PictureOutlined /> Hình Ảnh</>}
+            style={{ marginTop: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
+          >
             <Row gutter={[8, 8]}>
               <Col span={12}>
                 <div
-                  className="cursor-pointer transition-all duration-300 hover:scale-105"
+                  style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
                   onClick={() => handleViewImage(character.avatar)}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                 >
                   <Image
                     src={character.avatar}
                     alt="Avatar"
-                    className="w-full h-20 object-cover rounded-lg shadow-sm"
+                    style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
                     preview={false}
                   />
-                  <div className="text-xs text-center mt-1 text-gray-600">
+                  <div style={{ fontSize: '12px', textAlign: 'center', marginTop: '4px', color: '#8c8c8c' }}>
                     Avatar
                   </div>
                 </div>
               </Col>
               <Col span={12}>
                 <div
-                  className="cursor-pointer transition-all duration-300 hover:scale-105"
+                  style={{ cursor: 'pointer', transition: 'all 0.3s ease' }}
                   onClick={() => handleViewImage(character.fullImage)}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
                 >
                   <Image
                     src={character.fullImage}
                     alt="Full Image"
-                    className="w-full h-20 object-cover rounded-lg shadow-sm"
+                    style={{ width: '100%', height: '80px', objectFit: 'cover', borderRadius: '8px' }}
                     preview={false}
                   />
-                  <div className="text-xs text-center mt-1 text-gray-600">
+                  <div style={{ fontSize: '12px', textAlign: 'center', marginTop: '4px', color: '#8c8c8c' }}>
                     Toàn Thân
                   </div>
                 </div>
@@ -470,8 +509,8 @@ const BeautyDetailPage = () => {
               {
                 key: 'overview',
                 label: (
-                  <span className="flex items-center">
-                    <GlobalOutlined className="mr-2" />
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <GlobalOutlined style={{ marginRight: '8px' }} />
                     Tổng Quan
                   </span>
                 ),
@@ -480,8 +519,8 @@ const BeautyDetailPage = () => {
               {
                 key: 'attributes',
                 label: (
-                  <span className="flex items-center">
-                    <ClusterOutlined className="mr-2" />
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <ClusterOutlined style={{ marginRight: '8px' }} />
                     Thuộc Tính
                   </span>
                 ),
@@ -490,8 +529,8 @@ const BeautyDetailPage = () => {
               {
                 key: 'skills',
                 label: (
-                  <span className="flex items-center">
-                    <BulbOutlined className="mr-2" />
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <BulbOutlined style={{ marginRight: '8px' }} />
                     Kỹ Năng
                   </span>
                 ),
@@ -500,8 +539,8 @@ const BeautyDetailPage = () => {
               {
                 key: 'equipment',
                 label: (
-                  <span className="flex items-center">
-                    <Shield className="mr-2" />
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <SafetyOutlined style={{ marginRight: '8px' }} />
                     Trang Bị
                   </span>
                 ),
@@ -510,8 +549,8 @@ const BeautyDetailPage = () => {
               {
                 key: 'statistics',
                 label: (
-                  <span className="flex items-center">
-                    <TrophyOutlined className="mr-2" />
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <TrophyOutlined style={{ marginRight: '8px' }} />
                     Thống Kê
                   </span>
                 ),
@@ -530,19 +569,20 @@ const BeautyDetailPage = () => {
         footer={null}
         width="80vw"
         style={{ top: 20 }}
-        className="image-modal"
+        styles={{ body: { padding: '24px' } }}
       >
         <Image
           src={selectedImage}
           alt="Character Image"
           style={{ width: '100%', height: 'auto', borderRadius: '8px' }}
+          preview={false}
         />
       </Modal>
 
       {/* Floating Action Button */}
       <FloatButton.Group
         shape="circle"
-        style={{ right: 24 }}
+        style={{ right: 24, bottom: 24 }}
         icon={<SettingOutlined />}
       >
         <FloatButton
@@ -566,28 +606,28 @@ const BeautyDetailPage = () => {
 
 // Tab Components với thiết kế mới
 const OverviewTab = ({ character }: { character: BeautyCharacter }) => (
-  <div className="space-y-6">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
     {/* Description */}
     <Card
       title={
-        <span className="flex items-center">
-          <FireOutlined className="mr-2 text-red-500" />
+        <span style={{ display: 'flex', alignItems: 'center' }}>
+          <FireOutlined style={{ marginRight: '8px', color: '#ff4d4f' }} />
           Mô Tả Nhân Vật
         </span>
       }
-      className="shadow-sm"
+      style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
     >
-      <div className="space-y-4">
-        <p className="text-gray-700 leading-relaxed text-lg">{character.description}</p>
-        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-          <p className="text-gray-600 italic">{'"' + character.title + '"'}</p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <p style={{ color: '#4a4a4a', lineHeight: 1.8, fontSize: '16px' }}>{character.description}</p>
+        <div style={{ background: '#fffbe6', borderLeft: '4px solid #faad14', padding: '16px', borderRadius: '4px' }}>
+          <p style={{ color: '#8c8c8c', fontStyle: 'italic', margin: 0 }}>{'"' + character.title + '"'}</p>
         </div>
       </div>
     </Card>
 
     {/* Basic Info */}
-    <Card title="Thông Tin Cơ Bản" className="shadow-sm">
-      <Descriptions column={2} bordered size="small">
+    <Card title="Thông Tin Cơ Bản" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
+      <Descriptions column={{ xs: 1, sm: 2 }} bordered size="small">
         <Descriptions.Item label="Độ Hiếm">
           <Tag color={getRarityColor(character.rarity)}>
             {character.rarity === 'common' ? 'Thường' :
@@ -610,23 +650,23 @@ const OverviewTab = ({ character }: { character: BeautyCharacter }) => (
 );
 
 const AttributesTab = ({ character }: { character: BeautyCharacter }) => (
-  <div className="space-y-6">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
     {/* Main Attributes */}
-    <Card title="Thuộc Tính Chính" className="shadow-sm">
+    <Card title="Thuộc Tính Chính" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <Row gutter={[16, 16]}>
         {Object.entries(character.attributes).map(([key, value]) => (
           <Col xs={24} md={12} key={key}>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="flex justify-between items-center mb-2">
-                <span className="font-semibold capitalize">
+            <div style={{ background: '#fafafa', borderRadius: '8px', padding: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 600, textTransform: 'capitalize' }}>
                   {key === 'charm' ? '💝 Duyên Dáng' :
                     key === 'intelligence' ? '🧠 Trí Tuệ' :
                       key === 'diplomacy' ? '🤝 Ngoại Giao' :
                         key === 'intrigue' ? '🎭 Mưu Mẹo' : '🛡️ Trung Thành'}
                 </span>
                 <span
-                  className="font-bold text-lg"
-                  style={{ color: getAttributeColor(value) }}
+                  style={{ fontWeight: 'bold', fontSize: '18px' }}
+                  color={getAttributeColor(value)}
                 >
                   {value}/100
                 </span>
@@ -646,30 +686,30 @@ const AttributesTab = ({ character }: { character: BeautyCharacter }) => (
     </Card>
 
     {/* Attribute Summary */}
-    <Card title="Tổng Quan Thuộc Tính" className="shadow-sm">
+    <Card title="Tổng Quan Thuộc Tính" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <Row gutter={[16, 16]}>
         <Col span={8}>
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">
+          <div style={{ textAlign: 'center', padding: '16px', background: '#e6f7ff', borderRadius: '8px' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890FF' }}>
               {Object.values(character.attributes).reduce((a, b) => a + b, 0)}
             </div>
-            <div className="text-sm text-blue-600">Tổng Điểm</div>
+            <div style={{ fontSize: '14px', color: '#1890FF' }}>Tổng Điểm</div>
           </div>
         </Col>
         <Col span={8}>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">
+          <div style={{ textAlign: 'center', padding: '16px', background: '#f6ffed', borderRadius: '8px' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52C41A' }}>
               {Math.round(Object.values(character.attributes).reduce((a, b) => a + b, 0) / Object.values(character.attributes).length)}
             </div>
-            <div className="text-sm text-green-600">Điểm TB</div>
+            <div style={{ fontSize: '14px', color: '#52C41A' }}>Điểm TB</div>
           </div>
         </Col>
         <Col span={8}>
-          <div className="text-center p-4 bg-purple-50 rounded-lg">
-            <div className="text-2xl font-bold text-purple-600">
+          <div style={{ textAlign: 'center', padding: '16px', background: '#f9f0ff', borderRadius: '8px' }}>
+            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#722ED1' }}>
               {Math.max(...Object.values(character.attributes))}
             </div>
-            <div className="text-sm text-purple-600">Điểm Cao Nhất</div>
+            <div style={{ fontSize: '14px', color: '#722ED1' }}>Điểm Cao Nhất</div>
           </div>
         </Col>
       </Row>
@@ -685,8 +725,8 @@ const SkillsTab = ({ character }: { character: BeautyCharacter }) => (
   >
     <Panel
       header={
-        <span className="flex items-center text-blue-600 font-semibold">
-          <BulbOutlined className="mr-2" />
+        <span style={{ display: 'flex', alignItems: 'center', color: '#1890FF', fontWeight: 600 }}>
+          <BulbOutlined style={{ marginRight: '8px' }} />
           Kỹ Năng Chủ Động ({character.skills.filter(s => s.type === 'active').length})
         </span>
       }
@@ -695,19 +735,19 @@ const SkillsTab = ({ character }: { character: BeautyCharacter }) => (
       <List
         dataSource={character.skills.filter(skill => skill.type === 'active')}
         renderItem={skill => (
-          <List.Item className="!px-0">
-            <Card size="small" className="w-full hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-4">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-lg">{skill.name}</h4>
+          <List.Item style={{ padding: '8px 0' }}>
+            <Card size="small" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <h4 style={{ fontWeight: 600, fontSize: '16px', margin: 0 }}>{skill.name}</h4>
                     <Space>
                       <Tag color="blue">Lv.{skill.level}</Tag>
                       <Badge count="Chủ Động" style={{ backgroundColor: '#1890FF' }} />
                     </Space>
                   </div>
-                  <p className="text-gray-600 mb-2">{skill.description}</p>
-                  <div className="flex space-x-4 text-sm text-gray-500">
+                  <p style={{ color: '#4a4a4a', marginBottom: '8px' }}>{skill.description}</p>
+                  <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#8c8c8c' }}>
                     <span>⏱️ {skill.cooldown}h CD</span>
                     <span>🎯 {skill.effect.value}% {skill.effect.target}</span>
                     <span>📈 {skill.effect.type.replace('_', ' ')}</span>
@@ -722,8 +762,8 @@ const SkillsTab = ({ character }: { character: BeautyCharacter }) => (
 
     <Panel
       header={
-        <span className="flex items-center text-green-600 font-semibold">
-          <BulbOutlined className="mr-2" />
+        <span style={{ display: 'flex', alignItems: 'center', color: '#52C41A', fontWeight: 600 }}>
+          <BulbOutlined style={{ marginRight: '8px' }} />
           Kỹ Năng Bị Động ({character.skills.filter(s => s.type === 'passive').length})
         </span>
       }
@@ -732,16 +772,16 @@ const SkillsTab = ({ character }: { character: BeautyCharacter }) => (
       <List
         dataSource={character.skills.filter(skill => skill.type === 'passive')}
         renderItem={skill => (
-          <List.Item className="!px-0">
-            <Card size="small" className="w-full hover:shadow-md transition-shadow">
-              <div className="flex items-start space-x-4">
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-semibold text-lg">{skill.name}</h4>
+          <List.Item style={{ padding: '8px 0' }}>
+            <Card size="small" style={{ width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <h4 style={{ fontWeight: 600, fontSize: '16px', margin: 0 }}>{skill.name}</h4>
                     <Tag color="green">Bị Động</Tag>
                   </div>
-                  <p className="text-gray-600">{skill.description}</p>
-                  <div className="text-sm text-gray-500 mt-2">
+                  <p style={{ color: '#4a4a4a' }}>{skill.description}</p>
+                  <div style={{ fontSize: '14px', color: '#8c8c8c', marginTop: '8px' }}>
                     Hiệu ứng: {skill.effect.value}% {skill.effect.target}
                   </div>
                 </div>
@@ -755,25 +795,25 @@ const SkillsTab = ({ character }: { character: BeautyCharacter }) => (
 );
 
 const EquipmentTab = ({ character }: { character: BeautyCharacter }) => (
-  <div className="space-y-6">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
     {/* Costumes */}
-    <Card title="🦺 Trang Phục" className="shadow-sm">
+    <Card title="🦺 Trang Phục" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <Row gutter={[16, 16]}>
         {character.costumes.map(costume => (
           <Col xs={24} key={costume.id}>
             <Card
               size="small"
-              className={`border-l-4 ${costume.equipped
-                ? 'border-l-green-500 bg-green-50'
-                : 'border-l-gray-300'
-                } hover:shadow-md transition-shadow`}
+              style={{
+                borderLeft: `4px solid ${costume.equipped ? '#52C41A' : '#d9d9d9'}`,
+                background: costume.equipped ? '#f6ffed' : 'white'
+              }}
             >
-              <div className="flex items-center space-x-4">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                 <Avatar size={60} src={costume.image} shape="square" />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-2">
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <div>
-                      <h4 className="font-semibold text-lg">{costume.name}</h4>
+                      <h4 style={{ fontWeight: 600, fontSize: '16px', margin: 0 }}>{costume.name}</h4>
                       <Tag color={getRarityColor(costume.rarity)}>
                         {costume.rarity.toUpperCase()}
                       </Tag>
@@ -782,7 +822,7 @@ const EquipmentTab = ({ character }: { character: BeautyCharacter }) => (
                       <Badge status="success" text="Đang trang bị" />
                     )}
                   </div>
-                  <div className="flex space-x-4 text-sm text-gray-500">
+                  <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#8c8c8c' }}>
                     <span>Duyên +{costume.attributes.charm}</span>
                     <span>Trí +{costume.attributes.intelligence}</span>
                     <span>Giao +{costume.attributes.diplomacy}</span>
@@ -796,31 +836,31 @@ const EquipmentTab = ({ character }: { character: BeautyCharacter }) => (
     </Card>
 
     {/* Jewelry */}
-    <Card title="💎 Trang Sức" className="shadow-sm">
+    <Card title="💎 Trang Sức" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <Row gutter={[16, 16]}>
         {character.jewelry.map(jewelry => (
           <Col xs={24} md={12} key={jewelry.id}>
             <Card
               size="small"
-              className={`border-l-4 ${jewelry.equipped
-                ? 'border-l-blue-500 bg-blue-50'
-                : 'border-l-gray-300'
-                } hover:shadow-md transition-shadow`}
+              style={{
+                borderLeft: `4px solid ${jewelry.equipped ? '#1890FF' : '#d9d9d9'}`,
+                background: jewelry.equipped ? '#e6f7ff' : 'white'
+              }}
             >
-              <div className="flex items-center space-x-3">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                 <Avatar size={50} src={jewelry.image} />
-                <div className="flex-1">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="font-semibold">{jewelry.name}</h4>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                    <h4 style={{ fontWeight: 600, margin: 0 }}>{jewelry.name}</h4>
                     <Tag color={getRarityColor(jewelry.rarity)}>
                       {jewelry.rarity}
                     </Tag>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <div className="text-xs text-gray-500">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
                       {jewelry.equipped ? '✅ Đang đeo' : '❌ Chưa đeo'}
                     </div>
-                    <div className="text-xs">
+                    <div style={{ fontSize: '12px' }}>
                       <span>Duyên +{jewelry.attributes.charm}</span>
                     </div>
                   </div>
@@ -835,7 +875,7 @@ const EquipmentTab = ({ character }: { character: BeautyCharacter }) => (
 );
 
 const StatisticsTab = ({ character, stats }: { character: BeautyCharacter, stats: any }) => (
-  <div className="space-y-6">
+  <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
     <Row gutter={[16, 16]}>
       {[
         { title: 'Tổng Nhiệm Vụ', value: stats.missionsCompleted, icon: <RocketOutlined />, color: '#1890FF' },
@@ -848,13 +888,10 @@ const StatisticsTab = ({ character, stats }: { character: BeautyCharacter, stats
         <Col xs={24} sm={12} lg={8} key={index}>
           <Card
             size="small"
-            className="text-center hover:shadow-md transition-shadow border-0"
-            bodyStyle={{ padding: '20px' }}
+            style={{ textAlign: 'center', border: 'none', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}
+            styles={{ body: { padding: '20px' } }}
           >
-            <div
-              className="text-2xl mb-2"
-              style={{ color: stat.color }}
-            >
+            <div style={{ fontSize: '24px', marginBottom: '8px', color: stat.color }}>
               {stat.icon}
             </div>
             <Statistic
@@ -869,14 +906,14 @@ const StatisticsTab = ({ character, stats }: { character: BeautyCharacter, stats
     </Row>
 
     {/* Progress Charts */}
-    <Card title="📊 Hiệu Suất Chi Tiết" className="shadow-sm">
+    <Card title="📊 Hiệu Suất Chi Tiết" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}>
       <Row gutter={[24, 24]}>
         <Col xs={24} md={12}>
-          <div className="space-y-4">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <div className="flex justify-between mb-2">
-                <span className="font-semibold">Hoàn thành nhiệm vụ</span>
-                <span className="font-bold text-green-600">{stats.successRate}%</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 600 }}>Hoàn thành nhiệm vụ</span>
+                <span style={{ fontWeight: 'bold', color: '#52C41A' }}>{stats.successRate}%</span>
               </div>
               <Progress
                 percent={stats.successRate}
@@ -887,9 +924,9 @@ const StatisticsTab = ({ character, stats }: { character: BeautyCharacter, stats
               />
             </div>
             <div>
-              <div className="flex justify-between mb-2">
-                <span className="font-semibold">Tỷ lệ thắng trận</span>
-                <span className="font-bold text-red-600">{stats.battleWinRate}%</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={{ fontWeight: 600 }}>Tỷ lệ thắng trận</span>
+                <span style={{ fontWeight: 'bold', color: '#FF4D4F' }}>{stats.battleWinRate}%</span>
               </div>
               <Progress
                 percent={stats.battleWinRate}
@@ -902,8 +939,8 @@ const StatisticsTab = ({ character, stats }: { character: BeautyCharacter, stats
           </div>
         </Col>
         <Col xs={24} md={12}>
-          <div className="bg-gray-50 rounded-lg p-4 h-full">
-            <h4 className="font-semibold mb-3">Lịch Sử Hoạt Động</h4>
+          <div style={{ background: '#fafafa', borderRadius: '8px', padding: '16px', height: '100%' }}>
+            <h4 style={{ fontWeight: 600, marginBottom: '12px' }}>Lịch Sử Hoạt Động</h4>
             <Timeline>
               <Timeline.Item color="green">
                 <p>Nhận nhân vật: {new Date(character.acquisitionDate).toLocaleDateString('vi-VN')}</p>

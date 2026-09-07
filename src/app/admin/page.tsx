@@ -1,18 +1,18 @@
 // src/app/admin/page.tsx
 'use client';
 
-import React from 'react';
-import { 
-  Row, 
-  Col, 
-  Card, 
-  Typography, 
-  Spin, 
-  Alert, 
-  Space, 
-  Tag, 
+import {
+  Row,
+  Col,
+  Card,
+  Typography,
+  Spin,
+  Alert,
+  Space,
+  Tag,
   Progress,
-  Skeleton 
+  Skeleton,
+  Button
 } from 'antd';
 import {
   UserOutlined,
@@ -22,10 +22,21 @@ import {
   ThunderboltOutlined,
   CrownOutlined,
   RiseOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import dynamic from 'next/dynamic';
-import { useDashboardStats, formatCurrency, formatNumber } from '@/app/admin/hooks/useDashboardStats';
+import QuickActions from './components/QuickActions';
+import RealTimeChart from '@/components/admin/charts/RealTimeChart';
+import OverviewStats from './components/OverviewStats';
 
+// Import trực tiếp từ các file service
+import { useDashboardStats } from '@/app/admin/hooks/useDashboardStats';
+import { useRefreshDashboardStats } from '@/app/admin/hooks/useDashboardStats';
+import { formatCurrency, formatNumber } from '@/app/admin/hooks/useDashboardStats';
+
+const { Title, Text } = Typography;
+
+// Dynamic imports
 const SystemHealth = dynamic(() => import('./components/SystemHealth'), {
   ssr: false,
   loading: () => (
@@ -34,12 +45,6 @@ const SystemHealth = dynamic(() => import('./components/SystemHealth'), {
     </Card>
   ),
 });
-
-import QuickActions from './components/QuickActions';
-import RealTimeChart from '@/components/admin/charts/RealTimeChart';
-import OverviewStats from './components/OverviewStats';
-
-const { Title, Text } = Typography;
 
 // Skeleton cho Stats Card
 const StatsCardSkeleton = () => (
@@ -63,29 +68,41 @@ const ChartSkeleton = () => (
 );
 
 export default function DashboardPage() {
-  const { stats, loading, error, refresh } = useDashboardStats();
+  // Sử dụng React Query hook
+  const {
+    data: stats,
+    isLoading,
+    isError,
+    error,
+    isFetching,
+    refetch
+  } = useDashboardStats();
 
-  if (error) {
+  // Hook để refresh data
+  const { refresh, refreshAndRefetch } = useRefreshDashboardStats();
+
+  // Xử lý refresh
+  const handleRefresh = async () => {
+    await refreshAndRefetch();
+  };
+
+  // Hiển thị error
+  if (isError) {
     return (
       <div style={{ padding: 24 }}>
         <Alert
           message="Lỗi tải dữ liệu"
-          description={error}
+          description={error instanceof Error ? error.message : 'Không thể tải dữ liệu thống kê'}
           type="error"
           showIcon
           action={
-            <button 
-              onClick={refresh} 
-              style={{ 
-                padding: '4px 12px', 
-                cursor: 'pointer', 
-                borderRadius: 4, 
-                border: '1px solid #d9d9d9', 
-                background: 'white' 
-              }}
+            <Button
+              onClick={handleRefresh}
+              icon={<ReloadOutlined />}
+              loading={isFetching}
             >
               Thử lại
-            </button>
+            </Button>
           }
         />
       </div>
@@ -95,10 +112,10 @@ export default function DashboardPage() {
   return (
     <div style={{ padding: 24 }}>
       {/* Header */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center', 
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
         marginBottom: 24,
         flexWrap: 'wrap',
         gap: 12
@@ -106,37 +123,25 @@ export default function DashboardPage() {
         <Title level={2} style={{ color: '#8B0000', margin: 0 }}>
           Tổng Quan Hệ Thống
         </Title>
-        {!loading && stats && (
+        {!isLoading && stats && (
           <Space>
             <Tag color="green" icon={<RiseOutlined />}>
               Cập nhật: {new Date().toLocaleString('vi-VN')}
             </Tag>
-            <button 
-              onClick={refresh} 
-              style={{ 
-                padding: '4px 16px', 
-                cursor: 'pointer', 
-                borderRadius: 4, 
-                border: '1px solid #d9d9d9', 
-                background: 'white',
-                transition: 'all 0.3s'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = '#f0f0f0';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'white';
-              }}
+            <Button
+              onClick={handleRefresh}
+              icon={<ReloadOutlined spin={isFetching} />}
+              loading={isFetching}
             >
-              Làm mới
-            </button>
+              {isFetching ? 'Đang làm mới...' : 'Làm mới'}
+            </Button>
           </Space>
         )}
       </div>
 
       {/* Thống kê tổng quan - 4 cards */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {loading ? (
+        {isLoading ? (
           // Hiển thị skeleton khi loading
           <>
             <Col xs={24} sm={12} lg={6}>
@@ -268,7 +273,7 @@ export default function DashboardPage() {
 
       {/* Thống kê trận đấu */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {loading ? (
+        {isLoading ? (
           <>
             <Col xs={24} sm={12} lg={6}>
               <BattleStatsSkeleton />
@@ -316,17 +321,17 @@ export default function DashboardPage() {
                 <Row gutter={[8, 8]}>
                   {stats.battlesByStatus.map((item) => (
                     <Col span={6} key={item.status}>
-                      <div style={{ 
-                        textAlign: 'center', 
+                      <div style={{
+                        textAlign: 'center',
                         padding: '12px',
                         background: '#f5f5f5',
                         borderRadius: 8
                       }}>
                         <Tag color={
                           item.status === 'completed' ? 'green' :
-                          item.status === 'in_progress' ? 'blue' :
-                          item.status === 'matchmaking' ? 'orange' :
-                          'default'
+                            item.status === 'in_progress' ? 'blue' :
+                              item.status === 'matchmaking' ? 'orange' :
+                                'default'
                         }>
                           {item.status}
                         </Tag>
@@ -347,7 +352,7 @@ export default function DashboardPage() {
       {/* Biểu đồ và System Health */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={16}>
-          {loading ? (
+          {isLoading ? (
             <ChartSkeleton />
           ) : (
             <Card
@@ -355,7 +360,7 @@ export default function DashboardPage() {
               variant="borderless"
               style={{ height: '100%' }}
             >
-              <RealTimeChart  />
+              <RealTimeChart />
             </Card>
           )}
         </Col>
@@ -368,7 +373,7 @@ export default function DashboardPage() {
       {/* Hành động nhanh */}
       <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
         <Col xs={24}>
-          {loading ? (
+          {isLoading ? (
             <Card>
               <Skeleton active paragraph={{ rows: 2 }} />
             </Card>

@@ -4,7 +4,7 @@ import 'antd/dist/reset.css';
 import '../../app/globals.css';
 import '@ant-design/v5-patch-for-react-19';
 import { Suspense } from 'react';
-import { ConfigProvider } from 'antd';
+import { App, ConfigProvider } from 'antd';
 import { AntdRegistry } from '@ant-design/nextjs-registry';
 import theme from '@/theme/themeConfig';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -14,13 +14,20 @@ export default function LayoutClient({ children }: { children: React.ReactNode }
         <ConfigProvider
             theme={theme}
         >
-            <Suspense>
-                <AntdRegistry>
-                    <QueryClientProvider client={queryClient}>
-                        {children}
-                    </QueryClientProvider>
-                </AntdRegistry>
-            </Suspense>
+            {/*
+              AntD <App> cung cấp message/notification/modal the context cho App.useApp().
+              Đặt trong ConfigProvider để các instance này consume đúng dynamic theme
+              (tránh cảnh báo "Static function can not consume context like dynamic theme").
+            */}
+            <App>
+                <Suspense>
+                    <AntdRegistry>
+                        <QueryClientProvider client={queryClient}>
+                            {children}
+                        </QueryClientProvider>
+                    </AntdRegistry>
+                </Suspense>
+            </App>
         </ConfigProvider>
     );
 }

@@ -1,6 +1,6 @@
 // app/admin/hooks/useSystemAlerts.ts
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { message, Modal } from 'antd';
+import { App } from 'antd';
 import { supabase } from '@/utils/supabase/client';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
@@ -99,6 +99,9 @@ export const ALERT_LEVELS: AlertLevelConfig[] = [
 ];
 
 export const useSystemAlerts = (initialFilters?: AlertFilters) => {
+  // Lấy message/modal từ context (App) để consume đúng dynamic theme thay vì static API.
+  const { message, modal } = App.useApp();
+
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState<AlertFilters>(initialFilters || {
@@ -211,7 +214,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
         setSelectedAlert(alert);
       },
     });
-  }, [getAlertLevelConfig, playAlertSound]);
+  }, [getAlertLevelConfig, playAlertSound, message]);
 
   // Fetch alerts with filters
   const fetchAlerts = useCallback(async () => {
@@ -273,7 +276,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters, message]);
 
   // Fetch alert statistics
   const fetchStats = useCallback(async () => {
@@ -412,7 +415,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
       message.error('Không thể tải chi tiết cảnh báo');
       return null;
     }
-  }, []);
+  }, [message]);
 
   // Acknowledge an alert
   const acknowledgeAlert = useCallback(async (alertId: string): Promise<boolean> => {
@@ -433,7 +436,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
       message.error('Không thể xác nhận cảnh báo');
       return false;
     }
-  }, [fetchAlerts, fetchStats]);
+  }, [fetchAlerts, fetchStats, message]);
 
   // Acknowledge multiple alerts
   const acknowledgeAlerts = useCallback(async (alertIds: string[]): Promise<boolean> => {
@@ -454,7 +457,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
       message.error('Không thể xác nhận cảnh báo');
       return false;
     }
-  }, [fetchAlerts, fetchStats]);
+  }, [fetchAlerts, fetchStats, message]);
 
   // Unacknowledge an alert
   const unacknowledgeAlert = useCallback(async (alertId: string): Promise<boolean> => {
@@ -475,7 +478,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
       message.error('Không thể bỏ xác nhận cảnh báo');
       return false;
     }
-  }, [fetchAlerts, fetchStats]);
+  }, [fetchAlerts, fetchStats, message]);
 
   // Delete an alert
   const deleteAlert = useCallback(async (alertId: string): Promise<boolean> => {
@@ -496,7 +499,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
       message.error('Không thể xóa cảnh báo');
       return false;
     }
-  }, [fetchAlerts, fetchStats]);
+  }, [fetchAlerts, fetchStats, message]);
 
   // Bulk delete alerts
   const deleteAlerts = useCallback(async (alertIds: string[]): Promise<boolean> => {
@@ -517,13 +520,13 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
       message.error('Không thể xóa cảnh báo');
       return false;
     }
-  }, [fetchAlerts, fetchStats]);
+  }, [fetchAlerts, fetchStats, message]);
 
   // Clear all alerts
   const clearAllAlerts = useCallback(async (): Promise<boolean> => {
     try {
       const confirmed = await new Promise<boolean>((resolve) => {
-        Modal.confirm({
+        modal.confirm({
           title: 'Xóa tất cả cảnh báo',
           content: 'Bạn có chắc chắn muốn xóa tất cả cảnh báo? Hành động này không thể hoàn tác.',
           okText: 'Xóa tất cả',
@@ -552,7 +555,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
       message.error('Không thể xóa tất cả cảnh báo');
       return false;
     }
-  }, [fetchAlerts, fetchStats]);
+  }, [fetchAlerts, fetchStats, message, modal]);
 
   // Export alerts
   const exportAlerts = useCallback(async (format: 'json' | 'csv' = 'json') => {
@@ -613,7 +616,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
       console.error('Error exporting alerts:', error);
       message.error('Không thể xuất cảnh báo');
     }
-  }, []);
+  }, [message]);
 
   // Get unacknowledged alerts count
   const getUnacknowledgedCount = useCallback(async (): Promise<number> => {
@@ -782,7 +785,7 @@ export const useSystemAlerts = (initialFilters?: AlertFilters) => {
         subscriptionRef.current = null;
       }
     };
-  }, [isRealtimeEnabled, fetchStats, showAlertNotification]);
+  }, [isRealtimeEnabled, fetchStats, showAlertNotification, message]);
 
   // Toggle realtime
   const toggleRealtime = useCallback(() => {
