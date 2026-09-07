@@ -372,6 +372,22 @@ export function DiagramCanvas({
       onMouseUp={onPointerUp}
       onMouseLeave={onPointerUp}
     >
+      <style jsx global>{`
+        .arrow {
+          pointer-events: none;
+        }
+
+        .arrow__path {
+          stroke: #000;
+          fill: transparent;
+          stroke-dasharray: 4 2;
+        }
+
+        .arrow__head line {
+          stroke: #000;
+          stroke-width: 1px;
+        }
+      `}</style>
       {loadingTables ? (
         <div style={styles.loadingState}>
           <Spin size="large" />
@@ -523,26 +539,26 @@ export function DiagramCanvas({
                                 >
                                   {(col.is_primary_key ||
                                     col.is_foreign_key) && (
-                                    <span
-                                      title={
-                                        col.is_primary_key
-                                          ? "Primary Key"
-                                          : `Foreign Key → ${col.foreign_table}.${col.foreign_column}`
-                                      }
-                                      style={{
-                                        fontSize: 10,
-                                        lineHeight: 1,
-                                        padding: "2px 4px",
-                                        borderRadius: 3,
-                                        color: "#fff",
-                                        background: col.is_primary_key
-                                          ? "#D4AF37"
-                                          : "#DC143C",
-                                      }}
-                                    >
-                                      {col.is_primary_key ? "PK" : "FK"}
-                                    </span>
-                                  )}
+                                      <span
+                                        title={
+                                          col.is_primary_key
+                                            ? "Primary Key"
+                                            : `Foreign Key → ${col.foreign_table}.${col.foreign_column}`
+                                        }
+                                        style={{
+                                          fontSize: 10,
+                                          lineHeight: 1,
+                                          padding: "2px 4px",
+                                          borderRadius: 3,
+                                          color: "#fff",
+                                          background: col.is_primary_key
+                                            ? "#D4AF37"
+                                            : "#DC143C",
+                                        }}
+                                      >
+                                        {col.is_primary_key ? "PK" : "FK"}
+                                      </span>
+                                    )}
                                   <Text
                                     type="secondary"
                                     style={{ fontSize: 11 }}
