@@ -633,21 +633,6 @@ export default function Page() {
         onMoveDiagram={handleMoveDiagram}
       />
 
-      {/* ===== FLOAT BUTTON QUICK SAVE ===== */}
-      <FloatButton
-        icon={<SaveOutlined />}
-        type="primary"
-        style={{ bottom: 140, right: 30 }}
-        onClick={() => {
-          if (activeTab === 'new') {
-            setIsSaveModalOpen(true);
-          } else {
-            handleSaveCurrent(activeTab);
-          }
-        }}
-        tooltip="Lưu (Ctrl+S)"
-      />
-
       {/* ===== SYNC PROGRESS MODAL (tự mở khi đang đồng bộ) ===== */}
       <SyncProgressModal
         open={syncModalOpen}

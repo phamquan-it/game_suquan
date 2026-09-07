@@ -32,7 +32,8 @@ import {
   TableOutlined,
   DatabaseOutlined,
   FunctionOutlined,
-  ToolOutlined
+  ToolOutlined,
+  ClusterOutlined
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -176,6 +177,11 @@ const menuItems = [
         key: '/admin/tbl_systems',
         icon: <DatabaseOutlined />,
         label: 'Table Systems',
+      },
+       {
+        key: '/admin/diagrams',
+        icon: <ClusterOutlined />,
+        label: 'Diagrams',
       },
       {
         key: '/admin/func',
