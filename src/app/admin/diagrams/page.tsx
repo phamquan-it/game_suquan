@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { FloatButton, message } from 'antd';
 import { SaveOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@/lib/redux/hooks';
@@ -79,6 +79,9 @@ export default function Page() {
   const [isSearching, setIsSearching] = useState(false);
   const [columnsMap, setColumnsMap] = useState<Record<string, TableColumn[]>>({});
 
+  // Group của diagram đang chỉnh/sắp lưu ('' = chưa phân loại)
+  const [diagramGroup, setDiagramGroup] = useState('');
+
   // Log nguồn dữ liệu (client cache / server) hiển thị trong popup tiến trình
   const [syncLogs, setSyncLogs] = useState<SyncLogEntry[]>([]);
   // Trạng thái popup tiến trình: tự mở khi đang chạy đồng bộ, tự đóng khi xong
@@ -120,6 +123,11 @@ export default function Page() {
     exportData,
     importData,
     searchDiagrams,
+    setDiagramGroup: persistGroup, // đổi group trực tiếp trong DB
+    groupsList,
+    addGroup,
+    removeGroup,
+    renameDiagram,
   } = useDiagramCRUD();
 
   // Có bất kỳ thao tác đồng bộ nào đang chạy (columns / quan hệ) không
@@ -159,6 +167,28 @@ export default function Page() {
 
   const hasRelationships = relatedPairs.length > 0;
 
+  // ===== Derived: tên group để gợi ý chọn (modal Lưu + đổi group nhanh) =====
+  // Gộp từ (1) group mà các diagram đang dùng + (2) group rỗng đã tạo qua context menu
+  // (vd group nhiệm vụ) — để mọi nơi đều chọn được cả group chưa có diagram nào.
+  const groupLabels = useMemo(() => {
+    const set = new Set<string>();
+    for (const m of metadataList) {
+      const g = (m as any).group;
+      if (g && g.trim()) set.add(g.trim());
+    }
+    for (const gr of groupsList) {
+      if (gr.name && gr.name.trim()) set.add(gr.name.trim());
+    }
+    return Array.from(set);
+  }, [metadataList, groupsList]);
+
+  // group của diagram đang mở (tab != 'new'); undefined khi ở tab 'new'
+  const activeDiagramGroup = (() => {
+    if (activeTab === 'new') return undefined;
+    const meta = metadataList.find((m) => m.id === activeTab);
+    return meta?.group ?? '';
+  })();
+
   // ===== Load diagram khi đổi tab =====
   useEffect(() => {
     if (isInitialLoad.current) {
@@ -195,6 +225,7 @@ export default function Page() {
       dispatch(setSelectedTables([]));
       dispatch(setTablePositions({}));
       dispatch(resetArrowKey());
+      setDiagramGroup(''); // tab mới → reset group
       return;
     }
 
@@ -226,6 +257,25 @@ export default function Page() {
     loadDiagram();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  // ===== Đồng bộ group đang chỉnh theo diagram active (khi đổi tab / meta tải xong) =====
+  useEffect(() => {
+    if (activeTab === 'new') return;
+    const meta = metadataList.find((m) => m.id === activeTab);
+    setDiagramGroup(meta?.group ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, metadataList]);
+
+  // ===== Đổi group nhanh trên header → lưu thẳng DB =====
+  const handleChangeGroup = async (group: string) => {
+    if (activeTab === 'new') return;
+    const ok = await persistGroup(activeTab, group);
+    if (ok) {
+      message.success(group ? `Đã đổi sang group: ${group}` : 'Đã chuyển về Chưa phân loại');
+    } else {
+      message.error('Đổi group thất bại');
+    }
+  };
 
   // ===== Auto check relationships =====
   useEffect(() => {
@@ -319,6 +369,8 @@ export default function Page() {
       const success = await updateDiagram(targetId, stateMap, {
         name: metadata?.name || targetId,
         description: metadata?.description || '',
+        // Giữ/ghi group hiện tại của tab ('' → chưa phân loại)
+        group: diagramGroup,
       });
 
       if (success) {
@@ -345,6 +397,7 @@ export default function Page() {
     const success = await createDiagram(id, stateMap, {
       name: diagramName.trim(),
       description: diagramDescription.trim(),
+      group: diagramGroup,
     });
 
     if (success) {
@@ -365,6 +418,41 @@ export default function Page() {
       await loadMetadata();
       dispatch(closeTab(id));
     }
+  };
+
+  // ===== Tạo / xóa group (từ context menu trong drawer) =====
+  const handleCreateGroup = async (name: string): Promise<{ ok: boolean; reason?: string }> => {
+    const clean = (name || '').trim();
+    if (!clean) return { ok: false, reason: 'Tên group không được để trống' };
+    if (clean === 'Chưa phân loại')
+      return { ok: false, reason: 'Vui lòng chọn tên khác “Chưa phân loại” (nhãn dành riêng)' };
+    const exists = groupLabels.includes(clean) || groupsList.some((g) => g.name === clean);
+    if (exists) return { ok: false, reason: `Group "${clean}" đã tồn tại` };
+    const ok = await addGroup(clean);
+    return ok ? { ok: true } : { ok: false, reason: 'Không thể tạo group' };
+  };
+
+  const handleDeleteGroup = async (name: string): Promise<{ ok: boolean; reason?: string }> =>
+    removeGroup(name);
+
+  // ===== Đổi tên diagram (từ menu chuột phải) =====
+  const handleRenameDiagram = async (
+    id: string,
+    newName: string
+  ): Promise<{ ok: boolean; reason?: string }> => {
+    const clean = (newName || '').trim();
+    if (!clean) return { ok: false, reason: 'Tên không được để trống' };
+    const ok = await renameDiagram(id, clean);
+    return ok ? { ok: true } : { ok: false, reason: 'Không thể đổi tên diagram' };
+  };
+
+  // ===== Đổi nhóm diagram (từ menu chuột phải) — chỉ chọn group có sẵn =====
+  const handleMoveDiagram = async (id: string, group: string): Promise<boolean> => {
+    const ok = await persistGroup(id, group);
+    if (ok) {
+      message.success(group ? `Đã chuyển sang group: ${group}` : 'Đã chuyển về Chưa phân loại');
+    }
+    return ok;
   };
 
   // ===== Open diagram từ list =====
@@ -472,6 +560,16 @@ export default function Page() {
         onOpenPanel={() => setIsOpenPanelOpen(true)}
         onExport={handleExport}
         onImport={handleImport}
+        activeGroup={activeDiagramGroup}
+        groupLabels={groupLabels}
+        onChangeGroup={handleChangeGroup}
+        groupChoices={groupLabels}
+        onRenameDiagram={handleRenameDiagram}
+        onMoveDiagram={handleMoveDiagram}
+        onDeleteDiagram={(id) => {
+          // Xóa diagram khỏi DB rồi đóng tab (giống handleDeleteDiagram)
+          void handleDeleteDiagram(id);
+        }}
       />
 
       {/* ===== CONTROL PANEL ===== */}
@@ -506,8 +604,11 @@ export default function Page() {
         name={diagramName}
         description={diagramDescription}
         tableCount={selectedTables.length}
+        group={diagramGroup}
+        groupLabels={groupLabels}
         onNameChange={setDiagramName}
         onDescriptionChange={setDiagramDescription}
+        onGroupChange={setDiagramGroup}
         onSave={handleCreateDiagram}
         onCancel={closeSaveModal}
       />
@@ -516,6 +617,8 @@ export default function Page() {
       <OpenDiagramDrawer
         open={isOpenPanelOpen}
         metadataList={metadataList}
+        groupsList={groupsList}
+        groupChoices={groupLabels}
         searchTerm={searchTerm}
         searchResults={searchResults}
         isSearching={isSearching}
@@ -524,6 +627,10 @@ export default function Page() {
         onOpen={handleOpenDiagram}
         onDelete={handleDeleteDiagram}
         onCreateNew={handleCreateNew}
+        onCreateGroup={handleCreateGroup}
+        onDeleteGroup={handleDeleteGroup}
+        onRenameDiagram={handleRenameDiagram}
+        onMoveDiagram={handleMoveDiagram}
       />
 
       {/* ===== FLOAT BUTTON QUICK SAVE ===== */}

@@ -7,6 +7,7 @@ interface DiagramRecord {
   id: string;
   name: string;
   description: string;
+  group: string;
   data: DiagramStateMap;
   updatedAt: string;
   createdAt: string;
@@ -16,6 +17,7 @@ interface DiagramMetadata {
   id: string;
   name: string;
   description: string;
+  group: string;
   updatedAt: string;
   createdAt: string;
   tableCount?: number;
@@ -27,6 +29,20 @@ export function useDiagramCRUD() {
   const [diagrams, setDiagrams] = useState<DiagramRecord[]>([]);
   const [metadataList, setMetadataList] = useState<DiagramMetadata[]>([]);
   const [currentDiagram, setCurrentDiagram] = useState<DiagramRecord | null>(null);
+  // Danh sách group rỗng (không có diagram) — tạo/xóa qua context menu
+  const [groupsList, setGroupsList] = useState<Array<{ name: string; createdAt: string }>>([]);
+
+  // ===== Load all groups (rỗng) =====
+  const loadGroups = useCallback(async () => {
+    try {
+      const groups = await diagramDB.listGroups();
+      setGroupsList(groups);
+      return groups;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to load groups'));
+      return [];
+    }
+  }, []);
 
   // ===== Load all diagrams =====
   const loadAllDiagrams = useCallback(async () => {
@@ -73,6 +89,7 @@ export function useDiagramCRUD() {
         data,
         name: id,
         description: '',
+        group: '',
         updatedAt: new Date().toISOString(),
         createdAt: new Date().toISOString(),
       };
@@ -82,6 +99,7 @@ export function useDiagramCRUD() {
       if (metadata) {
         record.name = metadata.name;
         record.description = metadata.description;
+        record.group = metadata.group;
         record.updatedAt = metadata.updatedAt;
         record.createdAt = metadata.createdAt;
       }
@@ -100,7 +118,7 @@ export function useDiagramCRUD() {
   const createDiagram = useCallback(async (
     id: string,
     data: DiagramStateMap,
-    options?: { name?: string; description?: string }
+    options?: { name?: string; description?: string; group?: string }
   ): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -121,7 +139,7 @@ export function useDiagramCRUD() {
   const updateDiagram = useCallback(async (
     id: string,
     data: DiagramStateMap,
-    options?: { name?: string; description?: string }
+    options?: { name?: string; description?: string; group?: string }
   ): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -148,7 +166,7 @@ export function useDiagramCRUD() {
   // ===== Update metadata only =====
   const updateMetadata = useCallback(async (
     id: string,
-    metadata: { name?: string; description?: string }
+    metadata: { name?: string; description?: string; group?: string }
   ): Promise<boolean> => {
     setLoading(true);
     setError(null);
@@ -344,6 +362,80 @@ export function useDiagramCRUD() {
     }
   }, [loadAllDiagrams, loadMetadata, currentDiagram, getDiagram]);
 
+  // ===== List tất cả group đang dùng (từ DB thực tế) =====
+  const getAllGroups = useCallback(async (): Promise<Array<{
+    group: string;
+    label: string;
+    count: number;
+  }>> => {
+    try {
+      const groups = await diagramDB.getAllGroups();
+      return groups;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to list groups'));
+      return [];
+    }
+  }, []);
+
+  // ===== Tạo group rỗng (chưa có diagram) =====
+  const addGroup = useCallback(async (name: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      await diagramDB.createGroup(name);
+      await loadGroups();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to create group'));
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [loadGroups]);
+
+  // ===== Xóa group (chỉ được khi group đó rỗng) =====
+  const removeGroup = useCallback(async (name: string): Promise<{ ok: boolean; reason?: string }> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const result = await diagramDB.deleteGroup(name);
+      if (result.ok) {
+        await loadGroups();
+      }
+      return result;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to delete group'));
+      return { ok: false, reason: 'Lỗi khi xóa group' };
+    } finally {
+      setLoading(false);
+    }
+  }, [loadGroups]);
+
+  // ===== Đổi group cho một diagram (chỉ cập nhật metadata) =====
+  const setDiagramGroup = useCallback(async (id: string, group: string): Promise<boolean> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const metadata = await diagramDB.getDiagramMetadata(id);
+      if (!metadata) {
+        throw new Error('Diagram not found');
+      }
+      await diagramDB.updateDiagramMetadata(id, {
+        name: metadata.name,
+        description: metadata.description,
+        group,
+      });
+      await loadAllDiagrams();
+      await loadMetadata();
+      return true;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Failed to change diagram group'));
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  }, [loadAllDiagrams, loadMetadata]);
+
   // ===== Duplicate diagram =====
   const duplicateDiagram = useCallback(async (
     id: string,
@@ -380,6 +472,8 @@ export function useDiagramCRUD() {
   // ===== Auto load on mount =====
   useEffect(() => {
     loadMetadata();
+    loadGroups();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return {
@@ -389,10 +483,14 @@ export function useDiagramCRUD() {
     diagrams,
     metadataList,
     currentDiagram,
+    groupsList,
 
     // CRUD
     loadAllDiagrams,
     loadMetadata,
+    loadGroups,
+    addGroup,
+    removeGroup,
     getDiagram,
     getDiagramByName,
     createDiagram,
@@ -403,6 +501,8 @@ export function useDiagramCRUD() {
     diagramExists,
     renameDiagram,
     duplicateDiagram,
+    getAllGroups,
+    setDiagramGroup,
 
     // Search & Export
     searchDiagrams,
