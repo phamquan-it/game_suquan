@@ -14,6 +14,7 @@ export interface StoryChoice {
   choice_order: number;
   created_at: string;
   boss_id: string | null;
+  active_scene: string; // New field
   // Joined data
   next_scene?: {
     id: string;
@@ -89,6 +90,7 @@ export interface ChoiceFilters {
   orderTo?: number;
   dateFrom?: string;
   dateTo?: string;
+  activeScene?: string | null; // New filter
 }
 
 export interface ChoiceStats {
@@ -112,6 +114,10 @@ export interface ChoiceStats {
     dialogText: string;
     count: number;
   } | null;
+  activeSceneDistribution: { // New stats
+    scene: string;
+    count: number;
+  }[];
 }
 
 export interface CreateChoiceData {
@@ -123,6 +129,7 @@ export interface CreateChoiceData {
   choice_order: number;
   boss_id?: string | null;
   quest_ids?: string[];
+  active_scene?: string; // New field
 }
 
 export interface UpdateChoiceData {
@@ -133,6 +140,7 @@ export interface UpdateChoiceData {
   choice_order?: number;
   boss_id?: string | null;
   quest_ids?: string[];
+  active_scene?: string; // New field
 }
 
 export interface ChoiceValidationResult {
@@ -140,6 +148,16 @@ export interface ChoiceValidationResult {
   message: string;
   chain?: string[];
 }
+
+// Active scene options
+export const ACTIVE_SCENE_OPTIONS = [
+  { value: 'main', label: 'Main Scene' },
+  { value: 'combat', label: 'Combat Scene' },
+  { value: 'dialogue', label: 'Dialogue Scene' },
+  { value: 'exploration', label: 'Exploration Scene' },
+  { value: 'cutscene', label: 'Cutscene' },
+  { value: 'special', label: 'Special Scene' },
+];
 
 export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
   const [choices, setChoices] = useState<StoryChoice[]>([]);
@@ -155,6 +173,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
     orderTo: undefined,
     dateFrom: '',
     dateTo: '',
+    activeScene: null,
   });
   const [stats, setStats] = useState<ChoiceStats | null>(null);
   const [selectedChoice, setSelectedChoice] = useState<StoryChoice | null>(null);
@@ -166,7 +185,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
   const fetchChoices = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       // Build the query
       let query = supabase
         .from('story_choices')
@@ -252,6 +271,11 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
         query = query.is('boss_id', null);
       }
 
+      // New active scene filter
+      if (filters.activeScene) {
+        query = query.eq('active_scene', filters.activeScene);
+      }
+
       if (filters.hasQuests === true) {
         const { data: choicesWithQuests } = await supabase
           .from('story_choice_quests')
@@ -295,12 +319,13 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
       const { data, error } = await query;
 
       if (error) throw error;
-      
+
       // Transform data to ensure quests is properly typed
       const transformedData = (data || []).map(item => ({
         ...item,
         quests: item.quests || [],
         stats_change: item.stats_change || {},
+        active_scene: item.active_scene || 'main', // Default to 'main' if null
       }));
 
       setChoices(transformedData);
@@ -333,6 +358,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
           choice_order,
           next_scene_id,
           boss_id,
+          active_scene,
           scene:scene_id (
             id,
             scene_order,
@@ -366,10 +392,10 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
       const totalWithQuests = choicesList.filter(c => choiceIdsWithQuests.has(c.id)).length;
 
       // Choices per scene
-      const choicesPerScene: Record<string, { 
-        sceneId: string; 
-        sceneOrder: number; 
-        dialogText: string; 
+      const choicesPerScene: Record<string, {
+        sceneId: string;
+        sceneOrder: number;
+        dialogText: string;
         choiceCount: number;
       }> = {};
 
@@ -388,7 +414,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
       });
 
       const totalChoicesPerScene = Object.values(choicesPerScene);
-      
+
       const sceneCounts = totalChoicesPerScene.map(scene => scene.choiceCount);
       const averageChoicesPerScene = sceneCounts.length > 0
         ? sceneCounts.reduce((a, b) => a + b, 0) / sceneCounts.length
@@ -398,10 +424,10 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
       const minChoicesInScene = sceneCounts.length > 0 ? Math.min(...sceneCounts) : 0;
 
       // Find most common next scene
-      const nextSceneCounts: Record<string, { 
-        sceneId: string; 
-        sceneOrder: number; 
-        dialogText: string; 
+      const nextSceneCounts: Record<string, {
+        sceneId: string;
+        sceneOrder: number;
+        dialogText: string;
         count: number;
       }> = {};
 
@@ -425,6 +451,18 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
         ? mostCommonNextSceneArray.reduce((a, b) => a.count > b.count ? a : b)
         : null;
 
+      // Active scene distribution
+      const activeSceneMap: Record<string, number> = {};
+      choicesList.forEach(choice => {
+        const scene = choice.active_scene || 'main';
+        activeSceneMap[scene] = (activeSceneMap[scene] || 0) + 1;
+      });
+
+      const activeSceneDistribution = Object.entries(activeSceneMap).map(([scene, count]) => ({
+        scene,
+        count,
+      }));
+
       setStats({
         total: total || 0,
         totalWithNextScene,
@@ -436,6 +474,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
         maxChoicesInScene,
         minChoicesInScene,
         mostCommonNextScene,
+        activeSceneDistribution,
       });
     } catch (error) {
       console.error('Error fetching choice stats:', error);
@@ -495,13 +534,14 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
         .single();
 
       if (error) throw error;
-      
+
       const transformedData = {
         ...data,
         quests: data?.quests || [],
         stats_change: data?.stats_change || {},
+        active_scene: data?.active_scene || 'main',
       };
-      
+
       setSelectedChoice(transformedData);
       return transformedData;
     } catch (error) {
@@ -598,6 +638,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
           stats_change: data.stats_change || {},
           choice_order: data.choice_order,
           boss_id: data.boss_id || null,
+          active_scene: data.active_scene || 'main',
           created_at: new Date().toISOString(),
         })
         .select()
@@ -661,7 +702,8 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
       const questIds = updateData.quest_ids;
       delete updateData.quest_ids;
 
-      updateData.updated_at = new Date().toISOString();
+      // Remove updated_at as it doesn't exist in the table
+      // updateData.updated_at = new Date().toISOString();
 
       const { data: choice, error } = await supabase
         .from('story_choices')
@@ -719,7 +761,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       message.success('Choice deleted successfully');
       await fetchChoices();
       await fetchStats();
@@ -740,7 +782,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
         .in('id', ids);
 
       if (error) throw error;
-      
+
       message.success(`Deleted ${ids.length} choices successfully`);
       await fetchChoices();
       await fetchStats();
@@ -763,7 +805,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
             .eq('id', id)
         )
       );
-      
+
       message.success('Choices reordered successfully');
       await fetchChoices();
       return true;
@@ -810,6 +852,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
           stats_change: original.stats_change,
           choice_order: nextOrder,
           boss_id: original.boss_id,
+          active_scene: original.active_scene || 'main',
           created_at: new Date().toISOString(),
         })
         .select()
@@ -876,13 +919,14 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
         .order('choice_order', { ascending: true });
 
       if (error) throw error;
-      
+
       const transformedData = (data || []).map(item => ({
         ...item,
         quests: item.quests || [],
         stats_change: item.stats_change || {},
+        active_scene: item.active_scene || 'main',
       }));
-      
+
       return transformedData;
     } catch (error) {
       console.error('Error fetching choices by scene:', error);
@@ -895,7 +939,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
   const exportChoices = useCallback(async (sceneId: string): Promise<any[] | null> => {
     try {
       const choicesData = await getChoicesByScene(sceneId);
-      
+
       const exportData = choicesData.map(choice => ({
         order: choice.choice_order,
         text: choice.choice_text,
@@ -904,6 +948,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
         next_scene_id: choice.next_scene_id || 'None',
         boss: choice.boss?.name || 'None',
         boss_id: choice.boss_id || 'None',
+        active_scene: choice.active_scene || 'main',
         stats_change: JSON.stringify(choice.stats_change),
         has_quests: (choice.quests?.length || 0) > 0,
         quest_names: choice.quests?.map(q => q.quest?.name).filter(Boolean).join(', ') || 'None',
@@ -919,7 +964,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
 
   // Validate choice chain
   const validateChoiceChain = useCallback(async (
-    choiceId: string, 
+    choiceId: string,
     targetSceneId?: string
   ): Promise<ChoiceValidationResult> => {
     try {
@@ -975,7 +1020,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
 
       return {
         valid: true,
-        message: targetSceneId 
+        message: targetSceneId
           ? `Target scene ${targetSceneId} not reachable from choice ${choiceId}`
           : 'Choice chain is valid and ends properly',
         chain,
@@ -1002,6 +1047,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
       orderTo: undefined,
       dateFrom: '',
       dateTo: '',
+      activeScene: null,
     });
   }, []);
 
@@ -1031,7 +1077,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
           await fetchScenes(storyId);
         }
       }
-      
+
       await fetchChoices();
       await fetchStats();
       await fetchBosses();
@@ -1052,6 +1098,7 @@ export const useStoryChoices = (initialFilters?: ChoiceFilters) => {
     availableScenes,
     availableBosses,
     availableQuests,
+    ACTIVE_SCENE_OPTIONS,
 
     // CRUD Operations
     createChoice,

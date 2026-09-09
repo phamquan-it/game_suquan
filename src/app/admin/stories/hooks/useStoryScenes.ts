@@ -3,6 +3,14 @@ import { useEffect, useState } from 'react';
 import { message } from 'antd';
 import { supabase } from '@/utils/supabase/client';
 
+// Typing style options
+export const TYPING_STYLES: { value: TypingStyle; label: string; description: string }[] = [
+  { value: 'standard', label: 'Standard', description: 'Normal typing speed' },
+  { value: 'brisk', label: 'Brisk', description: 'Fast, energetic typing' },
+  { value: 'snap', label: 'Snap', description: 'Quick, sharp typing' },
+  { value: 'slow', label: 'Slow', description: 'Slow, deliberate typing' },
+  { value: 'fluid', label: 'Fluid', description: 'Smooth, flowing typing' },
+];
 // Types
 export interface StoryScene {
   id: string;
@@ -13,6 +21,12 @@ export interface StoryScene {
   dialog_text: string;
   sound_effect: string;
   created_at: string;
+  // New columns
+  is_end_story: boolean;
+  is_failed_story: boolean;
+  active_scene_name: string | null;
+  failure_scene_name: string | null;
+  typing_style: 'standard' | 'brisk' | 'snap' | 'slow' | 'fluid' | null;
   // Joined data
   speaker?: StoryCharacter;
   choices?: StoryChoice[];
@@ -46,7 +60,6 @@ export interface StoryChoice {
   quests?: any[];
 }
 
-// Update Story type to match what we actually fetch
 export interface Story {
   id: string;
   title: string;
@@ -56,12 +69,13 @@ export interface Story {
   entry_scene_id?: string | null;
 }
 
-// Or create a simpler type for the select
 export interface StoryBasic {
   id: string;
   title: string;
   description: string | null;
 }
+
+export type TypingStyle = 'standard' | 'brisk' | 'snap' | 'slow' | 'fluid';
 
 export interface SceneFilters {
   storyId?: string;
@@ -74,6 +88,11 @@ export interface SceneFilters {
   orderTo?: number;
   dateFrom?: string;
   dateTo?: string;
+  isEndStory?: boolean | null;
+  isFailedStory?: boolean | null;
+  typingStyle?: TypingStyle | null;
+  hasActiveSceneName?: boolean | null;
+  hasFailureSceneName?: boolean | null;
 }
 
 export interface SceneStats {
@@ -93,6 +112,12 @@ export interface SceneStats {
     order: number;
     count: number;
   }[];
+  totalEndStoryScenes: number;
+  totalFailedStoryScenes: number;
+  typingStyleDistribution: {
+    style: string;
+    count: number;
+  }[];
 }
 
 export const useStoryScenes = (initialFilters?: SceneFilters) => {
@@ -109,11 +134,19 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
     orderTo: undefined,
     dateFrom: '',
     dateTo: '',
+    isEndStory: null,
+    isFailedStory: null,
+    typingStyle: null,
+    hasActiveSceneName: null,
+    hasFailureSceneName: null,
   });
   const [stats, setStats] = useState<SceneStats | null>(null);
   const [selectedScene, setSelectedScene] = useState<StoryScene | null>(null);
   const [availableCharacters, setAvailableCharacters] = useState<StoryCharacter[]>([]);
   const [availableStories, setAvailableStories] = useState<Story[]>([]);
+
+  // Typing style options for UI
+  const TYPING_STYLES: TypingStyle[] = ['standard', 'brisk', 'snap', 'slow', 'fluid'];
 
   // Fetch scenes with filters
   const fetchScenes = async () => {
@@ -147,11 +180,40 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
       }
 
       if (filters.search) {
-        query = query.or(`dialog_text.ilike.%${filters.search}%,background.ilike.%${filters.search}%`);
+        query = query.or(`dialog_text.ilike.%${filters.search}%,background.ilike.%${filters.search}%,active_scene_name.ilike.%${filters.search}%,failure_scene_name.ilike.%${filters.search}%`);
       }
 
       if (filters.speakerId) {
         query = query.eq('speaker_id', filters.speakerId);
+      }
+
+      // New filters
+      if (filters.isEndStory === true) {
+        query = query.eq('is_end_story', true);
+      } else if (filters.isEndStory === false) {
+        query = query.eq('is_end_story', false);
+      }
+
+      if (filters.isFailedStory === true) {
+        query = query.eq('is_failed_story', true);
+      } else if (filters.isFailedStory === false) {
+        query = query.eq('is_failed_story', false);
+      }
+
+      if (filters.typingStyle) {
+        query = query.eq('typing_style', filters.typingStyle);
+      }
+
+      if (filters.hasActiveSceneName === true) {
+        query = query.not('active_scene_name', 'is', null).neq('active_scene_name', '');
+      } else if (filters.hasActiveSceneName === false) {
+        query = query.or('active_scene_name.is.null,active_scene_name.eq.');
+      }
+
+      if (filters.hasFailureSceneName === true) {
+        query = query.not('failure_scene_name', 'is', null).neq('failure_scene_name', '');
+      } else if (filters.hasFailureSceneName === false) {
+        query = query.or('failure_scene_name.is.null,failure_scene_name.eq.');
       }
 
       if (filters.hasChoices === true) {
@@ -249,7 +311,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
   const fetchStats = async () => {
     try {
       let baseQuery = supabase.from('story_scenes').select('*', { count: 'exact', head: true });
-      
+
       if (filters.storyId) {
         baseQuery = baseQuery.eq('story_id', filters.storyId);
       }
@@ -266,20 +328,23 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
           scene_order,
           background,
           sound_effect,
-          speaker_id
+          speaker_id,
+          is_end_story,
+          is_failed_story,
+          typing_style
         `)
         .eq('story_id', filters.storyId || '');
 
       // Get speaker names separately
       const speakerIds = allScenes?.map(s => s.speaker_id).filter(Boolean) || [];
       let speakerMap: Record<string, string> = {};
-      
+
       if (speakerIds.length > 0) {
         const { data: speakers } = await supabase
           .from('story_characters')
           .select('id, name')
           .in('id', speakerIds);
-        
+
         speakerMap = speakers?.reduce((acc, s) => {
           acc[s.id] = s.name;
           return acc;
@@ -295,7 +360,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         .in('scene_id', scenesList.map(s => s.id));
 
       const sceneIdsWithChoices = new Set(scenesWithChoices?.map(s => s.scene_id) || []);
-      
+
       const totalWithChoices = scenesList.filter(s => sceneIdsWithChoices.has(s.id)).length;
       const totalWithoutChoices = scenesList.length - totalWithChoices;
 
@@ -339,7 +404,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         const order = scene.scene_order || 0;
         orderMap[order] = (orderMap[order] || 0) + 1;
       });
-      
+
       for (const [order, count] of Object.entries(orderMap)) {
         orderDistribution.push({ order: parseInt(order), count });
       }
@@ -356,6 +421,22 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         avgScenesPerStory = counts.reduce((a, b) => a + b, 0) / counts.length;
       }
 
+      // New stats
+      const totalEndStoryScenes = scenesList.filter(s => s.is_end_story === true).length;
+      const totalFailedStoryScenes = scenesList.filter(s => s.is_failed_story === true).length;
+
+      // Typing style distribution
+      const typingStyleMap: Record<string, number> = {};
+      scenesList.forEach(scene => {
+        const style = scene.typing_style || 'null';
+        typingStyleMap[style] = (typingStyleMap[style] || 0) + 1;
+      });
+
+      const typingStyleDistribution = Object.entries(typingStyleMap).map(([style, count]) => ({
+        style: style === 'null' ? 'Not Set' : style,
+        count,
+      }));
+
       setStats({
         total: total || 0,
         totalWithChoices,
@@ -366,6 +447,9 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         avgScenesPerStory,
         mostUsedSpeaker,
         sceneOrderDistribution: orderDistribution,
+        totalEndStoryScenes,
+        totalFailedStoryScenes,
+        typingStyleDistribution,
       });
     } catch (error) {
       console.error('Error fetching scene stats:', error);
@@ -451,7 +535,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
     }
   };
 
-  // Fetch available stories - Fixed type issue
+  // Fetch available stories
   const fetchStories = async () => {
     try {
       const { data, error } = await supabase
@@ -460,18 +544,16 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         .order('title', { ascending: true });
 
       if (error) throw error;
-      
-      // Map the data to match the Story type
+
       const mappedStories: Story[] = (data || []).map(item => ({
         id: item.id,
         title: item.title,
         description: item.description || null,
-        // Add default values for optional fields
         created_at: '',
         updated_at: '',
         entry_scene_id: null,
       }));
-      
+
       setAvailableStories(mappedStories);
       return mappedStories;
     } catch (error) {
@@ -489,6 +571,11 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
     speaker_id: string;
     dialog_text: string;
     sound_effect?: string;
+    is_end_story?: boolean;
+    is_failed_story?: boolean;
+    active_scene_name?: string | null;
+    failure_scene_name?: string | null;
+    typing_style?: TypingStyle | null;
   }) => {
     try {
       // Check if scene order already exists
@@ -513,13 +600,18 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
           speaker_id: data.speaker_id,
           dialog_text: data.dialog_text,
           sound_effect: data.sound_effect || '',
+          is_end_story: data.is_end_story || false,
+          is_failed_story: data.is_failed_story || false,
+          active_scene_name: data.active_scene_name || null,
+          failure_scene_name: data.failure_scene_name || null,
+          typing_style: data.typing_style || null,
           created_at: new Date().toISOString(),
         })
         .select()
         .single();
 
       if (error) throw error;
-      
+
       message.success('Scene created successfully');
       await fetchScenes();
       await fetchStats();
@@ -538,6 +630,11 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
     speaker_id: string;
     dialog_text: string;
     sound_effect: string;
+    is_end_story: boolean;
+    is_failed_story: boolean;
+    active_scene_name: string | null;
+    failure_scene_name: string | null;
+    typing_style: TypingStyle | null;
   }>) => {
     try {
       // If changing scene order, check for conflicts
@@ -571,7 +668,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         .single();
 
       if (error) throw error;
-      
+
       message.success('Scene updated successfully');
       await fetchScenes();
       await fetchStats();
@@ -592,7 +689,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       message.success('Scene deleted successfully');
       await fetchScenes();
       await fetchStats();
@@ -613,7 +710,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         .in('id', ids);
 
       if (error) throw error;
-      
+
       message.success(`Deleted ${ids.length} scenes successfully`);
       await fetchScenes();
       await fetchStats();
@@ -628,7 +725,6 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
   // Reorder scenes
   const reorderScenes = async (sceneIds: string[]) => {
     try {
-      // Update each scene's order
       await Promise.all(
         sceneIds.map((id, index) =>
           supabase
@@ -637,7 +733,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
             .eq('id', id)
         )
       );
-      
+
       message.success('Scenes reordered successfully');
       await fetchScenes();
       return true;
@@ -651,7 +747,6 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
   // Duplicate a scene
   const duplicateScene = async (id: string) => {
     try {
-      // Get original scene
       const { data: original, error: fetchError } = await supabase
         .from('story_scenes')
         .select('*')
@@ -660,7 +755,6 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
 
       if (fetchError) throw fetchError;
 
-      // Get max scene order for story
       const { data: scenes } = await supabase
         .from('story_scenes')
         .select('scene_order')
@@ -670,7 +764,6 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
 
       const nextOrder = scenes && scenes.length > 0 ? scenes[0].scene_order + 1 : 1;
 
-      // Create duplicate
       const { data: newScene, error: insertError } = await supabase
         .from('story_scenes')
         .insert({
@@ -681,13 +774,18 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
           speaker_id: original.speaker_id,
           dialog_text: `${original.dialog_text} (Copy)`,
           sound_effect: original.sound_effect,
+          is_end_story: original.is_end_story,
+          is_failed_story: original.is_failed_story,
+          active_scene_name: original.active_scene_name,
+          failure_scene_name: original.failure_scene_name,
+          typing_style: original.typing_style,
           created_at: new Date().toISOString(),
         })
         .select()
         .single();
 
       if (insertError) throw insertError;
-      
+
       message.success('Scene duplicated successfully');
       await fetchScenes();
       await fetchStats();
@@ -728,7 +826,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
   const exportScenes = async (storyId: string) => {
     try {
       const scenesData = await getScenesByStory(storyId);
-      
+
       const exportData = scenesData.map(scene => ({
         order: scene.scene_order,
         speaker: scene.speaker?.name || 'Unknown',
@@ -736,6 +834,11 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
         background: scene.background || 'None',
         sound_effect: scene.sound_effect || 'None',
         choices: scene.choices?.length || 0,
+        is_end_story: scene.is_end_story,
+        is_failed_story: scene.is_failed_story,
+        active_scene_name: scene.active_scene_name || 'None',
+        failure_scene_name: scene.failure_scene_name || 'None',
+        typing_style: scene.typing_style || 'Not Set',
       }));
 
       return exportData;
@@ -764,6 +867,7 @@ export const useStoryScenes = (initialFilters?: SceneFilters) => {
     selectedScene,
     availableCharacters,
     availableStories,
+    TYPING_STYLES,
 
     // CRUD Operations
     createScene,

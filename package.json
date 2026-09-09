@@ -46,6 +46,7 @@
     "react-syntax-highlighter": "^16.1.1",
     "reactflow": "^11.11.4",
     "recharts": "^3.2.1",
+    "sepay-pg-node": "^1.0.0",
     "uuid": "^13.0.0"
   },
   "devDependencies": {

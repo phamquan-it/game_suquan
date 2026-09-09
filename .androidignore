@@ -1,0 +1,22 @@
+# Build outputs
+build/
+.gradle/
+.next/
+.idea/
+*.iml
+*.log
+*.tmp
+
+# Dependencies
+node_modules/
+bower_components/
+vendor/
+
+# Generated files
+generated/
+out/
+dist/
+
+# System files
+.DS_Store
+Thumbs.db
