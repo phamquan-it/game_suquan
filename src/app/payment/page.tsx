@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import client from "./init";
-import { PaymentMethod } from 'sepay-pg-node';
+import { PaymentMethod } from 'sepay-pg-node/dist/types';
 
 // Game theme styles
 const styles = {
