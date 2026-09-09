@@ -4,7 +4,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import client from "./init";
-import { PaymentMethod } from 'sepay-pg-node/dist/types';
+
+export type PaymentMethod = 'BANK_TRANSFER' | 'NAPAS_BANK_TRANSFER' | 'CARD';
+
 
 // Game theme styles
 const styles = {
@@ -254,7 +256,7 @@ export default function PaymentPage() {
 
   const amountPresets = [10000, 20000, 50000, 100000, 200000, 500000];
 
-  const paymentMethods:PaymentMethodItem[] = [
+  const paymentMethods: PaymentMethodItem[] = [
     { value: 'BANK_TRANSFER', label: 'Chuyển khoản', icon: '🏦' },
     { value: 'CARD', label: 'Thẻ tín dụng', icon: '💳' },
     { value: 'NAPAS_BANK_TRANSFER', label: 'Mã QR', icon: '📱' },
@@ -294,7 +296,7 @@ export default function PaymentPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate
     if (!orderId.trim()) {
       setError('Vui lòng nhập mã đơn hàng');
