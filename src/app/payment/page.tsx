@@ -322,7 +322,7 @@ export default function PaymentPage() {
       // Create checkout fields with updated data
       const checkoutFormfields = client.checkout.initOneTimePaymentFields({
         operation: 'PURCHASE',
-        payment_method: paymentMethod,
+        payment_method: paymentMethod ?? 'BANK_TRANSFER',
         order_invoice_number: orderId,
         order_amount: amount,
         currency: 'VND',
