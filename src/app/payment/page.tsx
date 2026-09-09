@@ -322,14 +322,14 @@ export default function PaymentPage() {
       // Create checkout fields with updated data
       const checkoutFormfields = client.checkout.initOneTimePaymentFields({
         operation: 'PURCHASE',
-        payment_method: paymentMethod ?? 'BANK_TRANSFER',
+        payment_method: (paymentMethod ?? 'BANK_TRANSFER') as 'BANK_TRANSFER' | 'NAPAS_BANK_TRANSFER',
         order_invoice_number: orderId,
         order_amount: amount,
         currency: 'VND',
         order_description: description,
-        success_url: `http://localhost:3000/order/${orderId}?payment=success`,
-        error_url: `http://localhost:3000/order/${orderId}?payment=error`,
-        cancel_url: `http://localhost:3000/order/${orderId}?payment=cancel`,
+        success_url: `http://game-suquan.soluti0n.dev/order/${orderId}?payment=success`,
+        error_url: `http://game-suquan.soluti0n.dev/order/${orderId}?payment=error`,
+        cancel_url: `http://game-suquan.soluti0n.dev/order/${orderId}?payment=cancel`,
       });
 
       const checkoutURL = client.checkout.initCheckoutUrl();
