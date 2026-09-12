@@ -16,25 +16,19 @@ import {
   theme,
   Layout
 } from 'antd';
-import { 
+import {
   ClockCircleFilled,
-  CrownOutlined,
   HomeOutlined,
   ReloadOutlined,
   ArrowLeftOutlined,
   FileTextOutlined,
   DollarCircleFilled,
   CalendarOutlined,
-  EnvironmentOutlined,
   UserOutlined,
-  PhoneOutlined,
   MailOutlined,
   ShoppingCartOutlined,
-  StarOutlined,
   SafetyOutlined,
   GiftOutlined,
-  TrophyOutlined,
-  ThunderboltOutlined,
 } from '@ant-design/icons';
 import { Shield } from 'lucide-react';
 import PayLoading from './PayLoading';
@@ -43,8 +37,7 @@ import PaymentSuccess from './PaymentSuccess';
 import PaymentError from './PaymentError';
 import PaymentCancel from './PaymentCancel';
 import { styles, globalStyles } from './style';
-import { OrderData } from '../types';
-import { fetchOrderData } from '../data/mock_data';
+import { usePaymentBilling } from '@/lib/hooks/usePaymentBilling';
 
 const { Title, Text, Paragraph } = Typography;
 const { Content } = Layout;
@@ -58,13 +51,6 @@ const getPaymentStatus = (status: string | null): 'success' | 'error' | 'cancel'
   return null;
 };
 
-const rarityLabels = {
-  common: 'Thường',
-  rare: 'Hiếm',
-  epic: 'Sử Thi',
-  legendary: 'Huyền Thoại'
-};
-
 export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -72,35 +58,23 @@ export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
   
   const paymentParam = searchParams.get('payment');
   const paymentStatus = getPaymentStatus(paymentParam);
-  
-  const [orderData, setOrderData] = useState<OrderData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    console.log("orderId "+ orderId)
-    const loadOrder = async () => {
-      if (!orderId) {
-        setLoading(false);
-        setError('Không tìm thấy mã đơn hàng');
-        return;
-      }
+  // email + actionType được trang /payment truyền sang qua success_url/error_url/cancel_url
+  const email = searchParams.get('email') ?? '';
+  const actionType = searchParams.get('actionType') ?? '';
 
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await fetchOrderData(orderId);
-        setOrderData(data);
-      } catch (err) {
-        setError('Không thể tải thông tin đơn hàng. Vui lòng thử lại.');
-        console.error('Error fetching order:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const {
+    data: billing,
+    isLoading: loading,
+    error: billingError,
+  } = usePaymentBilling(email, actionType);
 
-    loadOrder();
-  }, [orderId]);
+  const orderData = billing ?? null;
+  const error = billingError
+    ? 'Không thể tải thông tin đơn hàng. Vui lòng thử lại.'
+    : !loading && !email
+      ? 'Không tìm thấy thông tin đơn hàng'
+      : null;
 
   const handleRetryPayment = useCallback(() => {
     router.push('/checkout');
@@ -126,15 +100,18 @@ export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
     }).format(value);
   }, []);
 
-  const getRarityTag = (rarity: string = 'common') => {
-    const colors = {
-      common: { color: '#8B8B8B', bg: '#F5F5F5' },
-      rare: { color: '#1E90FF', bg: '#E6F3FF' },
-      epic: { color: '#9B59B6', bg: '#F3E8F7' },
-      legendary: { color: '#FF6B00', bg: '#FFF0E6' }
-    };
-    return colors[rarity as keyof typeof colors] || colors.common;
-  };
+  const paymentMethodLabel =
+    orderData?.actionType === 'NAPAS_BANK_TRANSFER'
+      ? 'Chuyển khoản NAPAS'
+      : 'Chuyển khoản ngân hàng';
+
+  const createdAt = useMemo(() => {
+    if (!orderData) return '—';
+    return new Intl.DateTimeFormat('vi-VN', {
+      dateStyle: 'long',
+      timeStyle: 'short',
+    }).format(new Date());
+  }, [orderData]);
 
   if (loading) {
     return (
@@ -162,20 +139,20 @@ export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
                          {/* Status Header */}
               {paymentStatus === 'success' && (
                 <PaymentSuccess
-                  orderId={orderData.id}
-                  paymentMethod={orderData.paymentMethod}
+                  orderId={orderId}
+                  paymentMethod={paymentMethodLabel}
                 />
               )}
               {paymentStatus === 'cancel' && (
                 <PaymentCancel
-                  orderId={orderData.id}
-                  paymentMethod={orderData.paymentMethod}
+                  orderId={orderId}
+                  paymentMethod={paymentMethodLabel}
                 />
               )}
               {(paymentStatus === 'error' || !paymentStatus) && (
                 <PaymentError
-                  orderId={orderData.id}
-                  paymentMethod={orderData.paymentMethod}
+                  orderId={orderId}
+                  paymentMethod={paymentMethodLabel}
                 />
               )}
 
@@ -190,7 +167,7 @@ export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
                       <div>
                         <Text style={{ color: '#8B4513', fontSize: 14, fontWeight: 500 }}>Tổng tiền</Text>
                         <div style={{ fontSize: 32, fontWeight: 'bold', color: '#8B0000', fontFamily: '"Cinzel", serif' }}>
-                          {formatCurrency(orderData.total)}
+                          {formatCurrency(orderData.amount)}
                         </div>
                       </div>
                     </div>
@@ -201,9 +178,9 @@ export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
                         <CalendarOutlined style={{ color: '#003366', fontSize: 32 }} />
                       </div>
                       <div>
-                        <Text style={{ color: '#8B4513', fontSize: 14, fontWeight: 500 }}>Ngày đặt hàng</Text>
+                        <Text style={{ color: '#8B4513', fontSize: 14, fontWeight: 500 }}>Thời điểm tra cứu</Text>
                         <div style={{ fontSize: 20, fontWeight: 'bold', color: '#003366' }}>
-                          {orderData.date}
+                          {createdAt}
                         </div>
                       </div>
                     </div>
@@ -213,72 +190,61 @@ export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
 
               <Divider style={styles.fullDivider} />
 
-              {/* Order Items */}
+              {/* Chi tiết đơn hàng */}
               <div style={styles.fullSection}>
                 <Flex justify="space-between" align="center" style={{ marginBottom: '2rem' }}>
-                  <Title level={3} style={{ 
-                    margin: 0, 
+                  <Title level={3} style={{
+                    margin: 0,
                     color: '#8B4513',
                     fontFamily: '"Cinzel", serif'
                   }}>
                     <ShoppingCartOutlined style={{ marginRight: 12 }} />
                     Chi tiết đơn hàng
                   </Title>
-                  <Text style={{ fontSize: 16, color: '#8B4513' }}>
-                    {orderData.items.length} sản phẩm
-                  </Text>
+                  <Tag color={orderData.activated ? 'success' : 'warning'} style={{
+                    fontSize: 13,
+                    borderRadius: 12,
+                    padding: '2px 12px'
+                  }}>
+                    {orderData.activated ? 'Đã kích hoạt' : 'Chưa kích hoạt'}
+                  </Tag>
                 </Flex>
 
                 <div style={styles.fullOrderItems}>
-                  {orderData.items.map((item, index) => {
-                    const rarity = getRarityTag(item.rarity || 'common');
-                    return (
-                      <div 
-                        key={item.id}
-                        style={{
-                          ...styles.fullOrderItem,
-                          borderBottom: index < orderData.items.length - 1 
-                            ? '2px solid #F1E8D6' 
-                            : 'none',
-                          backgroundColor: index % 2 === 0 ? 'rgba(245, 245, 220, 0.3)' : 'transparent'
-                        }}
-                      >
-                        <div style={styles.fullOrderItemLeft}>
-                          <div style={{
-                            ...styles.fullItemIcon,
-                            backgroundColor: rarity.bg,
-                            color: rarity.color
-                          }}>
-                            <Text style={{ color: rarity.color, fontWeight: 'bold', fontSize: 20 }}>
-                              {item.quantity}
-                            </Text>
-                          </div>
-                          <div>
-                            <Text strong style={{ fontSize: 16, color: '#1a1a2e' }}>{item.name}</Text>
-                            <div style={{ marginTop: 4 }}>
-                              <Tag color={item.rarity || 'default'} style={{ 
-                                fontSize: 12, 
-                                borderRadius: 12,
-                                padding: '2px 12px'
-                              }}>
-                                {rarityLabels[item.rarity as keyof typeof rarityLabels] || 'Thường'}
-                              </Tag>
-                              <Text type="secondary" style={{ fontSize: 13, marginLeft: 12 }}>
-                                Số lượng: {item.quantity}
-                              </Text>
-                            </div>
-                          </div>
-                        </div>
-                        <Text strong style={{ 
-                          fontSize: 18, 
-                          color: '#8B0000',
-                          fontFamily: '"Cinzel", serif'
-                        }}>
-                          {formatCurrency(item.price * item.quantity)}
+                  <div style={styles.fullOrderItem}>
+                    <div style={styles.fullOrderItemLeft}>
+                      <div style={{
+                        ...styles.fullItemIcon,
+                        backgroundColor: '#FFF0E6',
+                        color: '#FF6B00'
+                      }}>
+                        <Text style={{ color: '#FF6B00', fontWeight: 'bold', fontSize: 20 }}>
+                          1
                         </Text>
                       </div>
-                    );
-                  })}
+                      <div>
+                        <Text strong style={{ fontSize: 16, color: '#1a1a2e' }}>
+                          {orderData.description}
+                        </Text>
+                        <div style={{ marginTop: 4 }}>
+                          <Tag color="gold" style={{
+                            fontSize: 12,
+                            borderRadius: 12,
+                            padding: '2px 12px'
+                          }}>
+                            {orderData.orderType}
+                          </Tag>
+                        </div>
+                      </div>
+                    </div>
+                    <Text strong style={{
+                      fontSize: 18,
+                      color: '#8B0000',
+                      fontFamily: '"Cinzel", serif'
+                    }}>
+                      {orderData.formattedAmount ?? formatCurrency(orderData.amount)}
+                    </Text>
+                  </div>
                 </div>
 
                 {/* Order Totals */}
@@ -286,23 +252,23 @@ export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
                   <Row gutter={[16, 16]}>
                     <Col xs={24} sm={12}>
                       <Flex justify="space-between" style={{ padding: '8px 0' }}>
-                        <Text style={{ fontSize: 15, color: '#8B4513' }}>Tạm tính</Text>
-                        <Text style={{ fontSize: 15 }}>{formatCurrency(orderData.total)}</Text>
+                        <Text style={{ fontSize: 15, color: '#8B4513' }}>Đơn giá</Text>
+                        <Text style={{ fontSize: 15 }}>{(orderData.formattedAmount ?? formatCurrency(orderData.amount))} {orderData.currency}</Text>
                       </Flex>
                       <Flex justify="space-between" style={{ padding: '8px 0' }}>
-                        <Text style={{ fontSize: 15, color: '#8B4513' }}>Phí vận chuyển</Text>
-                        <Text style={{ fontSize: 15 }}>{formatCurrency(orderData.shipping?.fee || 0)}</Text>
+                        <Text style={{ fontSize: 15, color: '#8B4513' }}>Số lượng</Text>
+                        <Text style={{ fontSize: 15 }}>1</Text>
                       </Flex>
                     </Col>
                     <Col xs={24} sm={12}>
                       <div style={styles.totalAmount}>
                         <Text strong style={{ fontSize: 18, color: '#8B4513' }}>Tổng cộng</Text>
-                        <Text strong style={{ 
-                          fontSize: 28, 
+                        <Text strong style={{
+                          fontSize: 28,
                           color: '#8B0000',
                           fontFamily: '"Cinzel", serif'
                         }}>
-                          {formatCurrency(orderData.total + (orderData.shipping?.fee || 0))}
+                          {formatCurrency(orderData.amount)}
                         </Text>
                       </div>
                     </Col>
@@ -310,60 +276,56 @@ export default function PaymentStatusDisplay({ orderId }: { orderId: string }) {
                 </div>
               </div>
 
-              {/* Shipping Information */}
-              {orderData.shipping && orderData.customer && (
-                <>
-                  <Divider style={styles.fullDivider} />
-                  <div style={styles.fullSection}>
-                    <Title level={4} style={{ 
-                      color: '#8B4513', 
-                      marginBottom: '1.5rem',
-                      fontFamily: '"Cinzel", serif'
-                    }}>
-                      <FileTextOutlined style={{ marginRight: 12 }} />
-                      Thông tin giao hàng
-                    </Title>
-                    <Row gutter={[24, 24]}>
-                      <Col xs={24} sm={12}>
-                        <div style={styles.infoItem}>
-                          <UserOutlined style={{ color: '#D4AF37', fontSize: 18 }} />
-                          <div>
-                            <Text type="secondary" style={{ fontSize: 13 }}>Người nhận</Text>
-                            <div><Text strong style={{ fontSize: 16 }}>{orderData.customer.name}</Text></div>
-                          </div>
-                        </div>
-                      </Col>
-                      <Col xs={24} sm={12}>
-                        <div style={styles.infoItem}>
-                          <PhoneOutlined style={{ color: '#D4AF37', fontSize: 18 }} />
-                          <div>
-                            <Text type="secondary" style={{ fontSize: 13 }}>Số điện thoại</Text>
-                            <div><Text strong style={{ fontSize: 16 }}>{orderData.customer.phone}</Text></div>
-                          </div>
-                        </div>
-                      </Col>
-                      <Col xs={24}>
-                        <div style={styles.infoItem}>
-                          <MailOutlined style={{ color: '#D4AF37', fontSize: 18 }} />
-                          <div>
-                            <Text type="secondary" style={{ fontSize: 13 }}>Email</Text>
-                            <div><Text strong style={{ fontSize: 16 }}>{orderData.customer.email}</Text></div>
-                          </div>
-                        </div>
-                      </Col>
-                      <Col xs={24}>
-                        <div style={styles.infoItem}>
-                          <EnvironmentOutlined style={{ color: '#D4AF37', fontSize: 18 }} />
-                          <div>
-                            <Text type="secondary" style={{ fontSize: 13 }}>Địa chỉ giao hàng</Text>
-                            <div><Text strong style={{ fontSize: 16 }}>{orderData.shipping.address}</Text></div>
-                          </div>
-                        </div>
-                      </Col>
-                    </Row>
-                  </div>
-                </>
-              )}
+              {/* Thông tin người chơi */}
+              <Divider style={styles.fullDivider} />
+              <div style={styles.fullSection}>
+                <Title level={4} style={{
+                  color: '#8B4513',
+                  marginBottom: '1.5rem',
+                  fontFamily: '"Cinzel", serif'
+                }}>
+                  <FileTextOutlined style={{ marginRight: 12 }} />
+                  Thông tin người chơi
+                </Title>
+                <Row gutter={[24, 24]}>
+                  <Col xs={24} sm={12}>
+                    <div style={styles.infoItem}>
+                      <UserOutlined style={{ color: '#D4AF37', fontSize: 18 }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: 13 }}>Tên người chơi</Text>
+                        <div><Text strong style={{ fontSize: 16 }}>{orderData.username}</Text></div>
+                      </div>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <div style={styles.infoItem}>
+                      <MailOutlined style={{ color: '#D4AF37', fontSize: 18 }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: 13 }}>Email</Text>
+                        <div><Text strong style={{ fontSize: 16 }}>{orderData.email}</Text></div>
+                      </div>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <div style={styles.infoItem}>
+                      <SafetyOutlined style={{ color: '#D4AF37', fontSize: 18 }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: 13 }}>Phương thức thanh toán</Text>
+                        <div><Text strong style={{ fontSize: 16 }}>{paymentMethodLabel}</Text></div>
+                      </div>
+                    </div>
+                  </Col>
+                  <Col xs={24} sm={12}>
+                    <div style={styles.infoItem}>
+                      <FileTextOutlined style={{ color: '#D4AF37', fontSize: 18 }} />
+                      <div>
+                        <Text type="secondary" style={{ fontSize: 13 }}>Loại đơn</Text>
+                        <div><Text strong style={{ fontSize: 16 }}>{orderData.orderType}</Text></div>
+                      </div>
+                    </div>
+                  </Col>
+                </Row>
+              </div>
 
               <Divider style={styles.fullDivider} />
 
