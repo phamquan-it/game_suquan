@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Menu } from 'antd';
 import {
   DashboardOutlined,
@@ -33,65 +33,74 @@ import {
   DatabaseOutlined,
   FunctionOutlined,
   ToolOutlined,
-  ClusterOutlined
+  ClusterOutlined,
+  CloudUploadOutlined
 } from '@ant-design/icons';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+
+/** Bọc label trong next/link để mục menu là thẻ <a> thật (mở tab mới, prefetch). */
+const linkLabel = (href: string, label: string) => (
+  <Link href={href} style={{ color: 'inherit' }}>
+    {label}
+  </Link>
+);
 
 const menuItems = [
   {
     key: '/admin',
     icon: <DashboardOutlined />,
-    label: 'Tổng Quan',
+    label: linkLabel('/admin', 'Tổng Quan'),
   },
   {
     key: '/admin/players',
     icon: <UserOutlined />,
-    label: 'Quản Lý Người Chơi',
+    label: linkLabel('/admin/players', 'Quản Lý Người Chơi'),
   },
   {
     key: '/admin/profile',
     icon: <IdcardOutlined />,
-    label: 'Hồ Sơ',
+    label: linkLabel('/admin/profile', 'Hồ Sơ'),
   },
   {
     key: '/admin/alliances',
     icon: <TeamOutlined />,
-    label: 'Liên Minh',
+    label: linkLabel('/admin/alliances', 'Liên Minh'),
   },
   {
     key: '/admin/generals',
     icon: <CrownOutlined />,
-    label: 'Danh Tướng',
+    label: linkLabel('/admin/generals', 'Danh Tướng'),
   },
   {
     key: '/admin/beauty',
     icon: <SmileOutlined />,
-    label: 'Mỹ Nhân',
+    label: linkLabel('/admin/beauty', 'Mỹ Nhân'),
   },
   {
     key: '/admin/units',
     icon: <FireOutlined />,
-    label: 'Quân Đội',
+    label: linkLabel('/admin/units', 'Quân Đội'),
   },
   {
     key: '/admin/battles',
     icon: <FireOutlined />,
-    label: 'Chiến Trường',
+    label: linkLabel('/admin/battles', 'Chiến Trường'),
   },
   {
     key: '/admin/quests',
     icon: <FileTextOutlined />,
-    label: 'Nhiệm Vụ',
+    label: linkLabel('/admin/quests', 'Nhiệm Vụ'),
   },
   {
     key: '/admin/lootboxes',
     icon: <GiftOutlined />,
-    label: 'Rương & Vật Phẩm',
+    label: linkLabel('/admin/lootboxes', 'Rương & Vật Phẩm'),
   },
   {
     key: '/admin/base_items',
     icon: <SkinOutlined />,
-    label: 'Vật Phẩm Cơ Bản',
+    label: linkLabel('/admin/base_items', 'Vật Phẩm Cơ Bản'),
   },
   {
     key: '/admin/economy',
@@ -101,35 +110,35 @@ const menuItems = [
       {
         key: '/admin/economy/shop-items',
         icon: <ShopOutlined />,
-        label: 'Cửa Hàng',
+        label: linkLabel('/admin/economy/shop-items', 'Cửa Hàng'),
       },
       {
         key: '/admin/economy/currencies',
         icon: <AccountBookOutlined />,
-        label: 'Tiền Tệ',
+        label: linkLabel('/admin/economy/currencies', 'Tiền Tệ'),
       },
-     
+
       {
         key: '/admin/economy/transactions',
         icon: <BarChartOutlined />,
-        label: 'Giao Dịch',
+        label: linkLabel('/admin/economy/transactions', 'Giao Dịch'),
       },
     ],
   },
   {
     key: '/admin/achievements',
     icon: <TrophyOutlined />,
-    label: 'Thành Tựu',
+    label: linkLabel('/admin/achievements', 'Thành Tựu'),
   },
   {
     key: '/admin/building',
     icon: <BuildOutlined />,
-    label: 'Xây Dựng',
+    label: linkLabel('/admin/building', 'Xây Dựng'),
   },
   {
     key: '/admin/chat',
     icon: <CommentOutlined />,
-    label: 'Chat & Tin Nhắn',
+    label: linkLabel('/admin/chat', 'Chat & Tin Nhắn'),
   },
     {
     key: '/admin/stories/story',
@@ -139,19 +148,19 @@ const menuItems = [
       {
         key: '/admin/stories',
         icon: <SnippetsOutlined />,
-        label: 'Danh Sách Truyện',
+        label: linkLabel('/admin/stories', 'Danh Sách Truyện'),
       },
       {
         key: '/admin/stories/characters',
         icon: <UserSwitchOutlined />,
-        label: 'Nhân Vật',
+        label: linkLabel('/admin/stories/characters', 'Nhân Vật'),
       },
        ],
   },
   {
     key: '/admin/regions',
     icon: <TagOutlined />,
-    label: 'Khu Vực',
+    label: linkLabel('/admin/regions', 'Khu Vực'),
   },
   {
     key: '/admin/system/sys',
@@ -161,45 +170,50 @@ const menuItems = [
       {
         key: '/admin/system',
         icon: <ControlOutlined />,
-        label: 'Cài Đặt Chung',
+        label: linkLabel('/admin/system', 'Cài Đặt Chung'),
       },
       {
         key: '/admin/quests/game_actions',
         icon: <ApiOutlined />,
-        label: 'Game Actions',
+        label: linkLabel('/admin/quests/game_actions', 'Game Actions'),
       },
       {
         key: '/admin/tblview',
         icon: <TableOutlined />,
-        label: 'Table Views',
+        label: linkLabel('/admin/tblview', 'Table Views'),
       },
       {
         key: '/admin/tbl_systems',
         icon: <DatabaseOutlined />,
-        label: 'Table Systems',
+        label: linkLabel('/admin/tbl_systems', 'Table Systems'),
+      },
+      {
+        key: '/admin/b2/upload-url',
+        icon: <CloudUploadOutlined />,
+        label: linkLabel('/admin/b2/upload-url', 'Phát Hành Bản Build'),
       },
        {
         key: '/admin/diagrams',
         icon: <ClusterOutlined />,
-        label: 'Diagrams',
+        label: linkLabel('/admin/diagrams', 'Diagrams'),
       },
       {
         key: '/admin/func',
         icon: <FunctionOutlined />,
-        label: 'Functions',
+        label: linkLabel('/admin/func', 'Functions'),
       },
       {
         key: '/admin/system/tools',
         icon: <ToolOutlined />,
-        label: 'Công Cụ',
+        label: linkLabel('/admin/system/tools', 'Công Cụ'),
       },
       {
         key: '/admin/system/logs',
         icon: <HistoryOutlined />,
-        label: 'Nhật Ký',
+        label: linkLabel('/admin/system/logs', 'Nhật Ký'),
       }]
   },
- 
+
 
 
 
@@ -210,23 +224,52 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
-  const router = useRouter();
   const pathname = usePathname();
 
-  // Find the parent key for nested routes to highlight the correct menu item
-  const getSelectedKeys = () => {
-    const parentKey = menuItems.find(item =>
+  // Nhóm cha của route hiện tại (nếu route nằm trong một submenu)
+  const getParentKey = () =>
+    menuItems.find(item =>
       item.children?.some(child => child.key === pathname)
     )?.key;
-    return parentKey ? [parentKey] : [pathname];
+
+  // Tô sáng chính mục đang mở, không phải nhóm cha.
+  // Route con khớp chính xác -> trả về key của chính nó.
+  // Route không có trong menu (vd /admin/players/[id]) -> lùi dần về tổ tiên
+  // gần nhất để vẫn giữ được highlight.
+  const getSelectedKeys = () => {
+    const parentKey = getParentKey();
+
+    if (parentKey) return [pathname];
+
+    const ancestor = menuItems
+      .flatMap(item => [item, ...(item.children ?? [])])
+      .map(item => item.key)
+      .filter(key => pathname === key || pathname.startsWith(`${key}/`))
+      .sort((a, b) => b.length - a.length)[0];
+
+    return ancestor ? [ancestor] : [pathname];
   };
 
   const getOpenKeys = () => {
-    const parentKey = menuItems.find(item =>
-      item.children?.some(child => child.key === pathname)
-    )?.key;
+    const parentKey = getParentKey();
     return parentKey ? [parentKey] : [];
   };
+
+  // openKeys phải là state có kiểm soát: `defaultOpenKeys` chỉ được antd đọc
+  // một lần lúc mount, nên điều hướng sang route khác sẽ không tự mở nhóm mới.
+  const [openKeys, setOpenKeys] = useState<string[]>(getOpenKeys);
+
+  // Mở nhóm chứa route hiện tại mỗi khi đổi trang, nhưng giữ nguyên các nhóm
+  // người dùng tự mở.
+  useEffect(() => {
+    const parentKey = getParentKey();
+    if (parentKey) {
+      setOpenKeys(prev =>
+        prev.includes(parentKey) ? prev : [...prev, parentKey]
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname]);
 
   return (
     <div style={{ padding: '16px 0', height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -259,10 +302,10 @@ export default function AdminSidebar({ collapsed }: AdminSidebarProps) {
       <Menu
         theme="dark"
         selectedKeys={getSelectedKeys()}
-        defaultOpenKeys={getOpenKeys()}
+        openKeys={openKeys}
+        onOpenChange={setOpenKeys}
         mode="inline"
         items={menuItems}
-        onClick={({ key }) => router.push(key)}
         style={{
           background: 'transparent',
           border: 'none',

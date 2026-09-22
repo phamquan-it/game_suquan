@@ -206,7 +206,7 @@ export default function TablesManager() {
               textShadow: "2px 2px 4px rgba(0,0,0,0.3)",
             }}
           >
-            🗄️ Quản Lý Tables & Triggers
+            Quản Lý Tables & Triggers
           </Title>
         </Space>
         <Space style={{ margin: "12px 0" }}>

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { supabase } from './utils/supabase/client'
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   // --- cookies example ---
   const allCookies = request.cookies.getAll()
  // console.log('All cookies:', allCookies)
@@ -37,4 +37,9 @@ export async function proxy(request: NextRequest) {
 
   // --- allow access if loggedIn ---
   return response
+}
+
+export const config = {
+  // Chỉ chạy proxy cho các route cần auth, bỏ qua static assets (_next, ảnh, favicon...)
+  matcher: ['/admin/:path*'],
 }
