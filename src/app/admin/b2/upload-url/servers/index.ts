@@ -1,20 +1,67 @@
 "use server";
 
+import { cache } from "react";
+import { cookies } from "next/headers";
 import { getB2 } from "@/lib/b2";
+import { authorize, getUploadUrl } from "@/lib/b2-upload";
 import { createAdminClient } from "@/utils/supabase/admin";
+import { createClient } from "@/utils/supabase/server";
 
+/**
+ * Chặn mọi server action trong file này cho tới khi xác thực được admin.
+ *
+ * Vì sao bắt buộc: các action dưới dùng service_role key để ghi game_versions
+ * và xóa file trên B2. service_role bypass TOÀN BỘ RLS, nên nếu không kiểm tra
+ * ở đây thì bất kỳ ai gọi được action đều ghi/xóa được (xem cảnh báo trong
+ * src/utils/supabase/admin.ts và phần GHI CHÚ VỀ RLS ở
+ * supabase/migration_game_versions_package_format.sql).
+ *
+ * is_admin() là hàm SECURITY DEFINER có sẵn trong DB, so user_roles với
+ * auth.uid() của chính session đang gọi → không giả mạo được từ client.
+ *
+ * Bọc trong cache() để nhiều lời gọi trong cùng một request chỉ query DB một lần.
+ */
+export const verifyAdmin = cache(async (): Promise<string> => {
+  const supabase = createClient(cookies());
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    throw new Error("Bạn cần đăng nhập để thực hiện thao tác này");
+  }
+
+  const { data: isAdmin, error: rpcError } = await supabase.rpc("is_admin");
+
+  if (rpcError) {
+    throw new Error(`Không kiểm tra được quyền admin: ${rpcError.message}`);
+  }
+
+  if (!isAdmin) {
+    throw new Error("Chỉ admin mới được phát hành bản build");
+  }
+
+  return user.id;
+});
+
+/**
+ * Lấy uploadUrl + authorizationToken cho MỘT lần upload.
+ *
+ * Dùng trực tiếp B2 native API (src/lib/b2-upload.ts) theo đúng flow của
+ * B2Upload.ts: authorize → getUploadUrl. Client nhận URL/token rồi tự POST
+ * file lên B2 bằng XHR để giữ được thanh tiến trình.
+ */
 export async function getB2UploadUrl() {
-  // kiểm tra admin ở đây
+  await verifyAdmin();
 
-  const b2 = await getB2();
-
-  const result = await b2.getUploadUrl({
-    bucketId: "7c05de4a5db3e2bc97d00418",
-  });
+  const auth = await authorize();
+  const result = await getUploadUrl(auth);
 
   return {
-    uploadUrl: result.data.uploadUrl,
-    authorizationToken: result.data.authorizationToken,
+    uploadUrl: result.uploadUrl,
+    authorizationToken: result.authorizationToken,
   };
 }
 
@@ -31,7 +78,7 @@ export type B2FileInfo = {
  * Trả về map theo fileName để tra cứu nhanh file nào đã tồn tại.
  */
 export async function listB2ReleaseFiles(): Promise<B2FileInfo[]> {
-  // kiểm tra admin ở đây
+  await verifyAdmin();
 
   const b2 = await getB2();
 
@@ -71,7 +118,7 @@ export async function deleteB2File({
   fileName: string;
   fileId: string;
 }): Promise<{ fileName: string; fileId: string }> {
-  // kiểm tra admin ở đây
+  await verifyAdmin();
 
   const b2 = await getB2();
 
@@ -153,7 +200,7 @@ export async function saveGameVersion({
   releaseNotes?: string;
   isMandatory?: boolean;
 }): Promise<GameVersionRow> {
-  // kiểm tra admin ở đây
+  await verifyAdmin();
 
   const supabase = createAdminClient();
   const buildNumber = await getNextBuildNumber(os);

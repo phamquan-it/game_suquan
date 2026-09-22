@@ -171,8 +171,12 @@ function getActiveConfig(os: GameOS, linuxFormat: LinuxFormat): OSConfig {
 // B2 helpers
 // ============================================================
 
-const B2_BUCKET_NAME = process.env.NEXT_PUBLIC_B2_BUCKET_NAME ?? "";
-const B2_DOWNLOAD_HOST = process.env.NEXT_PUBLIC_B2_DOWNLOAD_HOST ?? "";
+// Bucket công khai của game. Trước đây đọc NEXT_PUBLIC_B2_BUCKET_NAME và
+// NEXT_PUBLIC_B2_DOWNLOAD_HOST nhưng hai biến đó chưa từng có trong .env.local
+// nên getPublicUrl() luôn trả chuỗi rỗng và link tải không bao giờ hiện.
+// Dùng thẳng bucket name + host giống src/app/api/get-download-link/route.ts.
+const B2_BUCKET_NAME = "12suquan";
+const B2_DOWNLOAD_HOST = "https://f005.backblazeb2.com";
 
 /**
  * Tên file trên B2: game_su_quan_[version].[extension]
@@ -960,9 +964,8 @@ export default function UpdateGamePage() {
                       <Space direction="vertical" size={4}>
                         <Text copyable>{publicUrl}</Text>
                         <Text type="secondary">
-                          Hiển thị được khi đã khai báo{" "}
-                          <Text code>NEXT_PUBLIC_B2_DOWNLOAD_HOST</Text> và{" "}
-                          <Text code>NEXT_PUBLIC_B2_BUCKET_NAME</Text>.
+                          Bucket <Text code>{B2_BUCKET_NAME}</Text> đã bật
+                          quyền đọc công khai trên B2.
                         </Text>
                       </Space>
                     }
