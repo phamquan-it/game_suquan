@@ -50,6 +50,8 @@ import {
   saveGameVersion,
   type B2FileInfo,
 } from "./servers";
+import { buildPublicUrl } from "@/lib/b2-storage";
+import { classifyFile } from "@/lib/b2-classify";
 
 const { Title, Text, Paragraph } = Typography;
 const { Header, Content } = Layout;
@@ -174,22 +176,40 @@ function getActiveConfig(os: GameOS, linuxFormat: LinuxFormat): OSConfig {
 // Bucket công khai của game. Trước đây đọc NEXT_PUBLIC_B2_BUCKET_NAME và
 // NEXT_PUBLIC_B2_DOWNLOAD_HOST nhưng hai biến đó chưa từng có trong .env.local
 // nên getPublicUrl() luôn trả chuỗi rỗng và link tải không bao giờ hiện.
-// Dùng thẳng bucket name + host giống src/app/api/get-download-link/route.ts.
+// Nay đọc từ src/lib/b2-storage.ts — một nguồn duy nhất, có fallback nên vẫn
+// chạy khi chưa cấu hình env.
 const B2_BUCKET_NAME = "12suquan";
-const B2_DOWNLOAD_HOST = "https://f005.backblazeb2.com";
 
 /**
- * Tên file trên B2: game_su_quan_[version].[extension]
+ * Tên file trên B2 theo quy ước mặc định:
+ * game_su_quan_[version].[extension]
  * vd: "1.2.0" + android -> game_su_quan_1.2.0.apk
  *     "1.2.0" + linux/deb -> game_su_quan_1.2.0.deb
+ *
+ * Chỉ dùng khi KHÔNG bật chế độ tự đặt key.
  */
 function buildB2FileName(version: string, extension: string): string {
   return `game_su_quan_${version.trim()}${extension}`;
 }
 
+/**
+ * Key hợp lệ để upload: không rỗng, không bắt đầu bằng "/", không có "..",
+ * không khoảng trắng, không "//".
+ */
+function validateManualKey(value: string): string | null {
+  const key = value.trim();
+
+  if (!key) return "Key không được để trống";
+  if (key.startsWith("/")) return "Key không được bắt đầu bằng dấu /";
+  if (key.includes("..")) return "Key không được chứa ..";
+  if (key.includes("//")) return "Key không được chứa //";
+  if (/\s/.test(key)) return "Key không được chứa khoảng trắng";
+
+  return null;
+}
+
 function getPublicUrl(fileName: string): string {
-  if (!B2_DOWNLOAD_HOST || !B2_BUCKET_NAME) return "";
-  return `${B2_DOWNLOAD_HOST}/file/${B2_BUCKET_NAME}/${fileName}`;
+  return buildPublicUrl(fileName);
 }
 
 /** Bỏ dấu tiếng Việt để dùng làm "slug" phiên bản an toàn cho tên file. */
@@ -314,16 +334,34 @@ export default function UpdateGamePage() {
   const [releaseNotes, setReleaseNotes] = useState("");
   const [isMandatory, setIsMandatory] = useState(false);
   const [statusText, setStatusText] = useState("");
+  const [manualKey, setManualKey] = useState(false);
+  const [customKey, setCustomKey] = useState("");
 
   const config = getActiveConfig(os, linuxFormat);
   const isLinux = os === "linux";
   const versionSlug = toVersionSlug(version);
-  const fileName = versionSlug
-    ? buildB2FileName(versionSlug, config.extension)
-    : "";
+
+  // Key tự đặt (nếu bật) thay thế hoàn toàn quy ước game_su_quan_[version].[ext].
+  // Lý do có chế độ này: bucket đang tồn tại HAI quy ước song song, và không
+  // quy ước nào suy ra được từ (os, version) — vd file cũ nằm trong
+  // releases/linux/ với tên game_12_suquan-linux-x64.deb.
+  const customKeyError = manualKey ? validateManualKey(customKey) : null;
+  const effectiveKey = manualKey ? customKey.trim() : "";
+
+  const fileName = manualKey
+    ? effectiveKey
+    : versionSlug
+      ? buildB2FileName(versionSlug, config.extension)
+      : "";
+
   const publicUrl = fileName ? getPublicUrl(fileName) : "";
   const isVersionValid = versionSlug.length > 0;
   const isDuplicate = releaseFiles.some((f) => f.fileName === fileName);
+
+  // Cảnh báo khi key không khớp nền tảng nào đã biết: file vẫn upload được,
+  // nhưng sẽ KHÔNG xuất hiện ở nút nền tảng nào trên /download.
+  const keyClassification = manualKey && effectiveKey ? classifyFile(effectiveKey) : null;
+  const unknownKey = manualKey && effectiveKey && !keyClassification?.os;
 
   const resetUploadState = () => {
     setProgress(0);
@@ -373,8 +411,15 @@ export default function UpdateGamePage() {
       return;
     }
 
-    if (!isVersionValid) {
-      message.warning("Vui lòng nhập phiên bản (version)");
+    if (!fileName) {
+      message.warning(
+        manualKey ? "Vui lòng nhập key cho file" : "Vui lòng nhập phiên bản (version)"
+      );
+      return;
+    }
+
+    if (customKeyError) {
+      message.warning(customKeyError);
       return;
     }
 
@@ -415,7 +460,7 @@ export default function UpdateGamePage() {
 
       const row = await saveGameVersion({
         os,
-        version: versionSlug,
+        version: versionSlug || fileName,
         packageFormat: isLinux ? linuxFormat : "",
         b2Key: fileName,
         releaseNotes,
@@ -426,7 +471,7 @@ export default function UpdateGamePage() {
       setStatusText("");
 
       message.success(
-        `Đã phát hành ${config.label} ${versionSlug} (build ${row.build_number})`
+        `Đã phát hành ${config.label} ${versionSlug || fileName} (build ${row.build_number})`
       );
     } catch (error) {
       console.error(error);
@@ -444,7 +489,8 @@ export default function UpdateGamePage() {
     versionSlug,
     config.label,
     config.contentType,
-    isVersionValid,
+    manualKey,
+    customKeyError,
     os,
     isLinux,
     linuxFormat,
@@ -505,28 +551,21 @@ export default function UpdateGamePage() {
   // Danh sách file release
   // ============================================================
 
-  /** Nền tảng + định dạng, suy ra từ đuôi file. Khớp đuôi dài trước. */
+  /**
+   * Nền tảng + định dạng, suy từ tên file bằng bộ phân loại dùng chung
+   * (src/lib/b2-classify.ts). Trước đây chỗ này tự khớp đuôi file — cách đó
+   * không phân biệt được distro: "game_12_suquan-arch-x86_64.pkg.tar.zst" và
+   * "...-linux-x64.pkg.tar.zst" cùng đuôi nên ra cùng nhãn.
+   */
   const getFileAccent = (name: string) => {
-    const lower = name.toLowerCase();
+    const cls = classifyFile(name);
 
-    // Gộp mọi định dạng Linux thành một nhãn, khớp đuôi dài nhất trước
-    // để ".pkg.tar.zst" không bị ".zst" hay ".tar.gz" cướp mất.
-    const candidates: { ext: string; label: string; color: string }[] = [
-      ...(Object.keys(LINUX_FORMATS) as LinuxFormat[]).map((key) => ({
-        ext: LINUX_FORMATS[key].extension,
-        label: `Linux · ${key}`,
-        color: OS_CONFIG.linux.color,
-      })),
-      ...(Object.keys(OS_CONFIG) as GameOS[])
-        .filter((key) => key !== "linux")
-        .map((key) => ({
-          ext: OS_CONFIG[key].extension,
-          label: OS_CONFIG[key].label,
-          color: OS_CONFIG[key].color,
-        })),
-    ].sort((a, b) => b.ext.length - a.ext.length);
+    if (!cls.os) return null;
 
-    return candidates.find((c) => lower.endsWith(c.ext.toLowerCase())) ?? null;
+    return {
+      label: cls.label ?? OS_CONFIG[cls.os as GameOS]?.label ?? cls.os,
+      color: OS_CONFIG[cls.os as GameOS]?.color ?? "#8B4513",
+    };
   };
 
   const renderReleaseItem = (item: B2FileInfo) => {
@@ -680,25 +719,113 @@ export default function UpdateGamePage() {
               }
             >
               {/* Bước 1: phiên bản */}
-              <Text strong>1. Phiên bản</Text>
+              <Space
+                style={{ width: "100%", justifyContent: "space-between" }}
+                align="center"
+              >
+                <Text strong>1. Phiên bản</Text>
+                <Space size={8} align="center">
+                  <Text type="secondary" style={{ fontSize: 13 }}>
+                    Tự đặt key
+                  </Text>
+                  <Tooltip title="Bật để nhập key B2 đầy đủ thay vì theo quy ước game_su_quan_[version].{ext}. Dùng khi cần đặt key trong thư mục con, vd releases/linux/...">
+                    <Switch
+                      size="small"
+                      checked={manualKey}
+                      disabled={uploading}
+                      onChange={(checked) => {
+                        setManualKey(checked);
+                        setCustomKey("");
+                        resetUploadState();
+                      }}
+                    />
+                  </Tooltip>
+                </Space>
+              </Space>
+
               <Paragraph type="secondary" style={{ marginBottom: 8 }}>
-                Key trên B2 sẽ có dạng{" "}
-                <Text code>game_su_quan_[version].&#123;ext&#125;</Text>
+                {manualKey ? (
+                  <>
+                    Key B2 đầy đủ, kể cả thư mục con. Đuôi file quyết định file
+                    thuộc nền tảng nào trên trang /download.
+                  </>
+                ) : (
+                  <>
+                    Key trên B2 sẽ có dạng{" "}
+                    <Text code>game_su_quan_[version].&#123;ext&#125;</Text>
+                  </>
+                )}
               </Paragraph>
 
-              <Input
-                size="large"
-                prefix={<Tag color="#8B4513">version</Tag>}
-                placeholder="vd: 1.0.0"
-                value={version}
-                disabled={uploading}
-                onChange={(e) => {
-                  setVersion(e.target.value);
-                  resetUploadState();
-                }}
-                style={{ maxWidth: 360 }}
-                allowClear
-              />
+              {manualKey ? (
+                <Input
+                  size="large"
+                  prefix={<Tag color="#8B4513">key</Tag>}
+                  placeholder="vd: releases/linux/game_12_suquan-linux-x64.deb"
+                  value={customKey}
+                  disabled={uploading}
+                  status={customKeyError ? "error" : undefined}
+                  onChange={(e) => {
+                    setCustomKey(e.target.value);
+                    resetUploadState();
+                  }}
+                  allowClear
+                />
+              ) : (
+                <Input
+                  size="large"
+                  prefix={<Tag color="#8B4513">version</Tag>}
+                  placeholder="vd: 1.0.0"
+                  value={version}
+                  disabled={uploading}
+                  onChange={(e) => {
+                    setVersion(e.target.value);
+                    resetUploadState();
+                  }}
+                  style={{ maxWidth: 360 }}
+                  allowClear
+                />
+              )}
+
+              {customKeyError && (
+                <Alert
+                  style={{ marginTop: 12 }}
+                  type="error"
+                  showIcon
+                  message={customKeyError}
+                />
+              )}
+
+              {unknownKey && (
+                <Alert
+                  style={{ marginTop: 12 }}
+                  type="warning"
+                  showIcon
+                  message="Key không khớp nền tảng nào đã biết"
+                  description={
+                    <span>
+                      File vẫn upload được, nhưng sẽ{" "}
+                      <Text strong>không xuất hiện</Text> ở nút nền tảng nào
+                      trên trang /download. Đặt tên có chứa{" "}
+                      <Text code>windows</Text>, <Text code>linux</Text>,{" "}
+                      <Text code>arch</Text>, <Text code>android</Text> hoặc
+                      dùng đuôi quen thuộc (<Text code>.apk</Text>,{" "}
+                      <Text code>.zip</Text>, <Text code>.deb</Text>,{" "}
+                      <Text code>.rpm</Text>, <Text code>.AppImage</Text>) để
+                      trang tải nhận ra.
+                    </span>
+                  }
+                />
+              )}
+
+              {manualKey && keyClassification?.os && (
+                <Alert
+                  style={{ marginTop: 12 }}
+                  type="success"
+                  showIcon
+                  message={`Nhận diện: ${keyClassification.label}`}
+                />
+              )}
 
               <Divider style={{ margin: "20px 0 16px" }} />
 
@@ -843,7 +970,7 @@ export default function UpdateGamePage() {
                 size="large"
                 block
                 icon={<UploadOutlined />}
-                disabled={!file || !isVersionValid || uploading}
+                disabled={!file || !fileName || !!customKeyError || uploading}
                 loading={uploading}
                 onClick={handleUpload}
               >
@@ -985,11 +1112,14 @@ export default function UpdateGamePage() {
                   {
                     key: "version",
                     label: "Version",
-                    children: isVersionValid ? (
-                      <Tag color="#2E8B57">{versionSlug}</Tag>
-                    ) : (
-                      <Text type="secondary">chưa nhập</Text>
-                    ),
+                    children:
+                      !manualKey && versionSlug ? (
+                        <Tag color="#2E8B57">{versionSlug}</Tag>
+                      ) : (
+                        <Text type="secondary">
+                          {manualKey ? "tự đặt key" : "chưa nhập"}
+                        </Text>
+                      ),
                   },
                   {
                     key: "os",
@@ -1023,17 +1153,24 @@ export default function UpdateGamePage() {
               <Divider style={{ margin: "12px 0" }} />
 
               <Space direction="vertical" size={8} style={{ width: "100%" }}>
-                <Text type="secondary">
-                  Mẫu: <Text code>game_su_quan_[version].{config.extension}</Text>
-                </Text>
-
-                <Tooltip title="Key nằm ở thư mục gốc của bucket, không có tiền tố releases/.">
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    {isVersionValid
-                      ? `→ ${fileName}`
-                      : "→ game_su_quan_1.0.0" + config.extension}
+                {manualKey ? (
+                  <Text type="secondary">
+                    Đang tự đặt key — bỏ qua quy ước đặt tên.
                   </Text>
-                </Tooltip>
+                ) : (
+                  <Text type="secondary">
+                    Mẫu:{" "}
+                    <Text code>game_su_quan_[version].{config.extension}</Text>
+                  </Text>
+                )}
+
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  {fileName
+                    ? `→ ${fileName}`
+                    : manualKey
+                      ? "→ nhập key ở cột trái"
+                      : "→ game_su_quan_1.0.0" + config.extension}
+                </Text>
               </Space>
             </Card>
 

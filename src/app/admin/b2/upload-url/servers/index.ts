@@ -4,6 +4,7 @@ import { cache } from "react";
 import { cookies } from "next/headers";
 import { getB2 } from "@/lib/b2";
 import { authorize, getUploadUrl } from "@/lib/b2-upload";
+import { B2_BUCKET_ID, isPlaceholderKey } from "@/lib/b2-storage";
 import { createAdminClient } from "@/utils/supabase/admin";
 import { createClient } from "@/utils/supabase/server";
 
@@ -82,29 +83,48 @@ export async function listB2ReleaseFiles(): Promise<B2FileInfo[]> {
 
   const b2 = await getB2();
 
-  const { data } = await b2.listFileNames({
-    bucketId: "7c05de4a5db3e2bc97d00418",
-    startFileName: "",
-    prefix: "",
-    maxFileCount: 1000,
-    delimiter: "",
-  });
+  const collected: B2FileInfo[] = [];
+  let startFileName = "";
 
-  return (data.files ?? []).map(
-    (file: {
-      fileName: string;
-      fileId: string;
-      contentLength: number;
-      contentType: string;
-      uploadTimestamp: number;
-    }) => ({
-      fileName: file.fileName,
-      fileId: file.fileId,
-      contentLength: file.contentLength,
-      contentType: file.contentType,
-      uploadTimestamp: file.uploadTimestamp,
-    })
-  );
+  // Phân trang thật. Bản cũ chỉ gọi MỘT lần với maxFileCount 1000 rồi bỏ qua
+  // nextFileName — file thứ 1001 trở đi biến mất im lặng khỏi danh sách, và
+  // cũng không lọc file placeholder .bzEmpty mà B2 tạo để giữ thư mục rỗng.
+  const MAX_PAGES = 50;
+
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const { data } = await b2.listFileNames({
+      bucketId: B2_BUCKET_ID,
+      startFileName,
+      prefix: "",
+      maxFileCount: 1000,
+      delimiter: "",
+    });
+
+    const files = data.files ?? [];
+
+    for (const file of files) {
+      // Bỏ .bzEmpty để danh sách trong admin khớp với những gì /download hiện.
+      if (isPlaceholderKey(file.fileName)) continue;
+
+      // fileId cần cho deleteB2File ở client nên vẫn phải trả về — khác với
+      // /api/releases (public) là route cố ý bỏ fileId.
+      collected.push({
+        fileName: file.fileName,
+        fileId: file.fileId,
+        contentLength: file.contentLength,
+        contentType: file.contentType,
+        uploadTimestamp: file.uploadTimestamp,
+      });
+    }
+
+    if (!data.nextFileName || files.length === 0) break;
+
+    if (data.nextFileName === startFileName) break;
+
+    startFileName = data.nextFileName;
+  }
+
+  return collected;
 }
 
 /**

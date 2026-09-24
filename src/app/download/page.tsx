@@ -1,6 +1,6 @@
 "use client"
 // pages/download-page.tsx
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Layout,
   Button,
@@ -19,6 +19,9 @@ import {
   Alert,
   Tabs,
   Tooltip,
+  Modal,
+  Spin,
+  Empty,
   message
 } from 'antd';
 import {
@@ -31,158 +34,142 @@ import {
   Star,
   Gift,
   QrCode,
-  Apple,
   Package,
   Monitor
 } from 'lucide-react';
 import { AndroidFilled, LinuxOutlined, WindowsFilled } from '@ant-design/icons';
 import { GameLink } from '@/enums/Links';
-import DistroSelectorPopup from '@/components/DistroSelectorPopup';
+import DistroSelectorPopup, { type DistroValue } from '@/components/DistroSelectorPopup';
+import type { ReleaseFile } from '@/app/api/releases/route';
 
 
 
 const { Title, Paragraph, Text } = Typography;
 const { Header, Footer, Content } = Layout;
 
+type PlatformKey = 'windows' | 'linux' | 'android';
+
+/** Đuôi/keyword dùng để lọc file theo nền tảng — khớp với b2-classify.ts. */
+const PLATFORM_MATCHERS: Record<PlatformKey, (r: ReleaseFile) => boolean> = {
+  windows: (r) =>
+    r.os === 'windows' ||
+    /windows|win32|win64|win-x64|win-x86|\.zip$|\.exe$|\.msi$/i.test(r.fileName),
+  linux: (r) => r.os === 'linux',
+  android: (r) =>
+    r.os === 'android' || /\.apk$|android|arm64/i.test(r.fileName),
+};
+
+const PLATFORM_META: Record<PlatformKey, {
+  name: string;
+  icon: React.ReactNode;
+  requirements: Record<string, string>;
+}> = {
+  windows: {
+    name: 'Windows',
+    icon: <WindowsFilled size={24} />,
+    requirements: {
+      os: 'Windows 10/11 (64-bit)',
+      processor: 'Intel i5 or AMD equivalent',
+      memory: '8 GB RAM',
+      graphics: 'NVIDIA GTX 1060 / AMD RX 580',
+      storage: '10 GB available space'
+    }
+  },
+  linux: {
+    name: 'Linux',
+    icon: <LinuxOutlined size={24} />,
+    requirements: {
+      os: 'Ubuntu 22.04+, Fedora 39+, Arch Linux (64-bit)',
+      processor: 'Intel i5 or AMD equivalent',
+      memory: '8 GB RAM',
+      graphics: 'NVIDIA GTX 1060 / AMD RX 580',
+      storage: '10 GB available space'
+    }
+  },
+  android: {
+    name: 'Android',
+    icon: <AndroidFilled size={24} />,
+    requirements: {
+      os: 'Android 8.0 or later',
+      processor: 'Snapdragon 660 or equivalent',
+      memory: '4 GB RAM',
+      graphics: 'Adreno 512 or equivalent',
+      storage: '3 GB available space'
+    }
+  },
+};
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+}
+
 const DownloadPage = () => {
-  const [activePlatform, setActivePlatform] = useState('windows');
+  const [activePlatform, setActivePlatform] = useState<PlatformKey>('windows');
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [releases, setReleases] = useState<ReleaseFile[]>([]);
+  const [loadingReleases, setLoadingReleases] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [pickerPlatform, setPickerPlatform] = useState<PlatformKey | null>(null);
 
-  const platformData = {
-    windows: {
-      packageKey: '12_suquan_windows',
-      name: 'Windows',
-      icon: <WindowsFilled size={24} />,
-      version: 'v2.1.4',
-      size: '0.2 GB',
-      requirements: {
-        os: 'Windows 10/11 (64-bit)',
-        processor: 'Intel i5 or AMD equivalent',
-        memory: '8 GB RAM',
-        graphics: 'NVIDIA GTX 1060 / AMD RX 580',
-        storage: '10 GB available space'
-      }
-    },
-    linux: {
-      packageKey: '12_suquan_linux',
-      name: 'Linux',
-      icon: <LinuxOutlined size={24} />,
-      version: 'v2.1.4',
-      size: '0.2 GB',
-      requirements: {
-        os: 'Ubuntu 22.04+, Fedora 39+, Arch Linux (64-bit)',
-        processor: 'Intel i5 or AMD equivalent',
-        memory: '8 GB RAM',
-        graphics: 'NVIDIA GTX 1060 / AMD RX 580',
-        storage: '10 GB available space'
-      }
-    },
+  // Danh sách file lấy trực tiếp từ B2 qua /api/releases. Trước đây trang này
+  // hardcode packageKey/version/size — key thì không tồn tại trên bucket (nên
+  // bấm tải là 404), còn version "v2.1.4" và size "0.2 GB" là số bịa.
+  useEffect(() => {
+    let cancelled = false;
 
-    //    mac: {
-    //      name: 'macOS',
-    //      icon: <Apple size={24} />,
-    //      version: 'v2.1.3',
-    //      size: '0.2 GB',
-    //      requirements: {
-    //        os: 'macOS 11.0 or later',
-    //        processor: 'Apple M1 or Intel i5',
-    //        memory: '8 GB RAM',
-    //        graphics: 'Metal compatible GPU',
-    //        storage: '10 GB available space'
-    //      }
-    //    },
-    android: {
-      packageKey: 'android/app-release.apk',
-      name: 'Android',
-      icon: <AndroidFilled size={24} />,
-      version: 'v2.1.2',
-      size: '0.2 GB',
-      requirements: {
-        os: 'Android 8.0 or later',
-        processor: 'Snapdragon 660 or equivalent',
-        memory: '4 GB RAM',
-        graphics: 'Adreno 512 or equivalent',
-        storage: '3 GB available space'
-      }
-    }
-  };
-
-  const handleDownload = async (packageKey: string) => {
-    if (packageKey == '12_suquan_linux') {
-      setIsPopupOpen(true);
-    } else {
+    (async () => {
       try {
-        setIsDownloading(true);
-        setDownloadProgress(0);
+        setLoadingReleases(true);
+        setLoadError(null);
 
-        const res = await fetch(
-          `api/get-download-link?key=${packageKey}`
-        );
+        const res = await fetch('/api/releases');
+        const body = await res.json();
 
         if (!res.ok) {
-          throw new Error("Failed to get download URL");
+          throw new Error(body?.error ?? 'Không tải được danh sách file');
         }
 
-        const { url } = await res.json();
-
-        const interval = setInterval(() => {
-          setDownloadProgress((prev) => {
-            if (prev >= 90) {
-              clearInterval(interval);
-              return 90;
-            }
-            return prev + 10;
-          });
-        }, 300);
-
-        // trigger browser download
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-        clearInterval(interval);
-        setDownloadProgress(100);
-
-        setTimeout(() => {
-          setIsDownloading(false);
-        }, 500);
+        if (!cancelled) setReleases(body.releases ?? []);
       } catch (error) {
-        console.error(error);
-        setIsDownloading(false);
+        if (!cancelled) {
+          setLoadError(
+            error instanceof Error ? error.message : 'Không tải được danh sách file'
+          );
+        }
+      } finally {
+        if (!cancelled) setLoadingReleases(false);
       }
+    })();
 
-    }
-  };
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-  const versionFeatures = [
-    {
-      version: 'v2.1.4',
-      date: '15/01/2026',
-      features: [
-        'Thêm tính năng liên minh mới',
-        'Tối ưu hóa hiệu năng 15%',
-        'Sửa lỗi crash trên Windows 11',
-        'Cân bằng chiến thuật'
-      ]
-    },
-    //    {
-    //      version: 'v2.1.3',
-    //      date: '10/01/2024',
-    //      features: [
-    //        'Thêm 2 nhân vật mới',
-    //        'Cải thiện đồ họa',
-    //        'Tối ưu kết nối mạng',
-    //        'Sửa lỗi minor'
-    //      ]
-    //    }
-  ];
+  /** File khớp nền tảng đang chọn, mới nhất lên đầu. */
+  const filesForPlatform = useCallback(
+    (platform: PlatformKey) =>
+      releases
+        .filter(PLATFORM_MATCHERS[platform])
+        .sort((a, b) => b.uploadTimestamp - a.uploadTimestamp),
+    [releases]
+  );
 
-  const [selectedDistro, setSelectedDistro] = useState<'arch' | 'deb' | 'rpm' | null>(null);
+  const platformFiles = useMemo(
+    () => filesForPlatform(activePlatform),
+    [filesForPlatform, activePlatform]
+  );
+
+  /** Bản mới nhất của nền tảng đang chọn — dùng cho thẻ Phiên Bản / Kích Thước. */
+  const latest = platformFiles[0] ?? null;
+
+  const [selectedDistro, setSelectedDistro] = useState<DistroValue | null>(null);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+
   const handleOpenPopup = () => {
     setIsPopupOpen(true);
   };
@@ -191,7 +178,7 @@ const DownloadPage = () => {
     setIsPopupOpen(false);
   };
 
-  const handleDistroSelect = (distro: 'arch' | 'deb' | 'rpm') => {
+  const handleDistroSelect = (distro: DistroValue) => {
     setSelectedDistro(distro);
     message.success({
       content: `✓ ${distro.toUpperCase()} distribution selected successfully!`,
@@ -205,9 +192,102 @@ const DownloadPage = () => {
 
   const getDistroDisplayName = () => {
     if (!selectedDistro) return null;
-    const names = { arch: 'Arch Linux', deb: 'Debian/Ubuntu', rpm: 'RHEL/Fedora' };
+    const names: Record<DistroValue, string> = {
+      arch: 'Arch Linux',
+      deb: 'Debian/Ubuntu',
+      rpm: 'RHEL/Fedora',
+      appimage: 'AppImage',
+    };
     return names[selectedDistro];
   };
+
+  /**
+   * Tạo link tải mới mỗi lần gọi: /api/get-download-link cấp một token B2 mới
+   * (hạn 1 giờ) cho đúng key này.
+   */
+  const triggerDownload = useCallback(async (packageKey: string) => {
+    try {
+      setIsDownloading(true);
+      setDownloadProgress(0);
+
+      const res = await fetch(
+        `/api/get-download-link?key=${encodeURIComponent(packageKey)}`
+      );
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.error ?? 'Không lấy được link tải');
+      }
+
+      const { url } = await res.json();
+
+      const interval = setInterval(() => {
+        setDownloadProgress((prev) => {
+          if (prev >= 90) {
+            clearInterval(interval);
+            return 90;
+          }
+          return prev + 10;
+        });
+      }, 300);
+
+      // trigger browser download
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      clearInterval(interval);
+      setDownloadProgress(100);
+
+      setTimeout(() => {
+        setIsDownloading(false);
+        setPickerPlatform(null);
+      }, 500);
+    } catch (error) {
+      console.error(error);
+      setIsDownloading(false);
+      message.error(
+        error instanceof Error ? error.message : 'Tải thất bại'
+      );
+    }
+  }, []);
+
+  /** Nút tải chính: Linux mở popup chọn distro, các nền tảng khác chọn file. */
+  const handleDownload = useCallback(() => {
+    if (activePlatform === 'linux') {
+      setIsPopupOpen(true);
+      return;
+    }
+
+    if (platformFiles.length === 0) {
+      message.warning('Chưa có bản build cho nền tảng này');
+      return;
+    }
+
+    // Nhiều file cùng nền tảng (vd nhiều phiên bản) → để người dùng chọn.
+    if (platformFiles.length > 1) {
+      setPickerPlatform(activePlatform);
+      return;
+    }
+
+    triggerDownload(platformFiles[0].fileName);
+  }, [activePlatform, platformFiles, triggerDownload]);
+
+  const versionFeatures = [
+    {
+      version: 'v2.1.4',
+      date: '15/01/2026',
+      features: [
+        'Thêm tính năng liên minh mới',
+        'Tối ưu hóa hiệu năng 15%',
+        'Sửa lỗi crash trên Windows 11',
+        'Cân bằng chiến thuật'
+      ]
+    },
+  ];
 
   return (
     <Layout style={{ background: 'linear-gradient(135deg, #F5F5DC 0%, #F1E8D6 100%)', minHeight: '100vh' }}>
@@ -221,7 +301,70 @@ const DownloadPage = () => {
           onClose={handleClosePopup}
           onSelect={handleDistroSelect}
           defaultSelected="arch"
+          linuxFiles={filesForPlatform('linux')}
+          onDownload={triggerDownload}
+          downloading={isDownloading}
         />
+
+        {/* Chọn file khi một nền tảng có nhiều bản build */}
+        <Modal
+          open={pickerPlatform !== null}
+          title={
+            pickerPlatform
+              ? `Chọn bản build cho ${PLATFORM_META[pickerPlatform].name}`
+              : ''
+          }
+          footer={null}
+          onCancel={() => setPickerPlatform(null)}
+          width={640}
+        >
+          {pickerPlatform && (
+            <List
+              dataSource={filesForPlatform(pickerPlatform)}
+              renderItem={(item) => (
+                <List.Item
+                  actions={[
+                    <Button
+                      key="dl"
+                      type="primary"
+                      size="small"
+                      icon={<Download size={14} />}
+                      loading={isDownloading}
+                      onClick={() => triggerDownload(item.fileName)}
+                      style={{
+                        background: 'linear-gradient(135deg, #D4AF37, #FFD700)',
+                        border: 'none',
+                        color: '#8B0000',
+                        fontWeight: 'bold'
+                      }}
+                    >
+                      Tải
+                    </Button>
+                  ]}
+                >
+                  <List.Item.Meta
+                    avatar={<Package size={20} color="#8B0000" />}
+                    title={
+                      <Text strong style={{ color: '#8B0000', wordBreak: 'break-all' }}>
+                        {item.fileName}
+                      </Text>
+                    }
+                    description={
+                      <Space size={12} wrap>
+                        <Text type="secondary">{formatBytes(item.contentLength)}</Text>
+                        <Text type="secondary">
+                          {new Date(item.uploadTimestamp).toLocaleString('vi-VN')}
+                        </Text>
+                        {item.label && <Tag color="#D4AF37">{item.label}</Tag>}
+                      </Space>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          )}
+        </Modal>
+
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -294,53 +437,94 @@ const DownloadPage = () => {
                     Chọn Nền Tảng
                   </Title>
                   <Space size="middle" style={{ width: '100%', justifyContent: 'center' }}>
-                    {Object.entries(platformData).map(([key, platform]) => (
-                      <Tooltip key={key} title={`Tải cho ${platform.name}`}>
-                        <Button
-                          size="large"
-                          type={activePlatform === key ? 'primary' : 'default'}
-                          icon={platform.icon}
-                          style={{
-                            background: activePlatform === key ?
-                              'linear-gradient(135deg, #D4AF37, #FFD700)' : 'transparent',
-                            border: `2px solid #D4AF37`,
-                            color: activePlatform === key ? '#8B0000' : '#D4AF37',
-                            height: '80px',
-                            width: '120px',
-                            fontSize: '16px',
-                            fontWeight: 'bold'
-                          }}
-                          onClick={() => setActivePlatform(key)}
+                    {(Object.keys(PLATFORM_META) as PlatformKey[]).map((key) => {
+                      const meta = PLATFORM_META[key];
+                      const count = filesForPlatform(key).length;
+
+                      return (
+                        <Tooltip
+                          key={key}
+                          title={
+                            count > 0
+                              ? `${count} bản build cho ${meta.name}`
+                              : `Chưa có bản build cho ${meta.name}`
+                          }
                         >
-                          {platform.name}
-                        </Button>
-                      </Tooltip>
-                    ))}
+                          <Button
+                            size="large"
+                            type={activePlatform === key ? 'primary' : 'default'}
+                            icon={meta.icon}
+                            disabled={count === 0}
+                            style={{
+                              background: activePlatform === key ?
+                                'linear-gradient(135deg, #D4AF37, #FFD700)' : 'transparent',
+                              border: `2px solid #D4AF37`,
+                              color: activePlatform === key ? '#8B0000' : '#D4AF37',
+                              height: '80px',
+                              width: '120px',
+                              fontSize: '16px',
+                              fontWeight: 'bold'
+                            }}
+                            onClick={() => setActivePlatform(key)}
+                          >
+                            <div>{meta.name}</div>
+                            <div style={{ fontSize: 11, fontWeight: 400 }}>
+                              {count > 0 ? `${count} bản` : '—'}
+                            </div>
+                          </Button>
+                        </Tooltip>
+                      );
+                    })}
                   </Space>
                 </div>
 
-                {/* Download Info */}
+                {/* Download Info — số liệu thật lấy từ B2, không còn hardcode */}
                 <Card style={{
                   background: 'rgba(212, 175, 55, 0.1)',
                   border: '1px solid #D4AF37',
                   marginBottom: '20px'
                 }}>
-                  <Row gutter={[16, 16]}>
-                    <Col xs={12}>
-                      <Statistic
-                        title="Phiên Bản"
-                        value={platformData[activePlatform as keyof typeof platformData].version}
-                        valueStyle={{ color: '#D4AF37', fontSize: '18px' }}
-                      />
-                    </Col>
-                    <Col xs={12}>
-                      <Statistic
-                        title="Kích Thước"
-                        value={platformData[activePlatform as keyof typeof platformData].size}
-                        valueStyle={{ color: '#D4AF37', fontSize: '18px' }}
-                      />
-                    </Col>
-                  </Row>
+                  {loadingReleases ? (
+                    <div style={{ textAlign: 'center', padding: '8px 0' }}>
+                      <Spin />
+                    </div>
+                  ) : loadError ? (
+                    <Alert type="error" showIcon message={loadError} />
+                  ) : latest ? (
+                    <>
+                      <Row gutter={[16, 16]}>
+                        <Col xs={12}>
+                          <Statistic
+                            title="Kích Thước"
+                            value={formatBytes(latest.contentLength)}
+                            valueStyle={{ color: '#D4AF37', fontSize: '18px' }}
+                          />
+                        </Col>
+                        <Col xs={12}>
+                          <Statistic
+                            title="Cập Nhật"
+                            value={new Date(latest.uploadTimestamp).toLocaleDateString('vi-VN')}
+                            valueStyle={{ color: '#D4AF37', fontSize: '18px' }}
+                          />
+                        </Col>
+                      </Row>
+                      <Text
+                        style={{
+                          display: 'block',
+                          marginTop: 12,
+                          fontSize: 12,
+                          color: 'rgba(212, 175, 55, 0.85)',
+                          wordBreak: 'break-all'
+                        }}
+                      >
+                        {latest.fileName.split('/').pop()}
+                      </Text>
+                    </>
+                  ) : (
+                    <Text style={{ color: '#D4AF37' }}>
+                      Chưa có bản build cho nền tảng này.
+                    </Text>
+                  )}
                 </Card>
 
                 {/* Download Progress */}
@@ -376,9 +560,12 @@ const DownloadPage = () => {
                     color: '#8B0000',
                     marginBottom: '20px'
                   }}
-                  onClick={() => handleDownload(platformData[activePlatform as keyof typeof platformData].packageKey)}
+                  onClick={handleDownload}
+                  disabled={!loadingReleases && platformFiles.length === 0}
                 >
-                  {isDownloading ? 'ĐANG TẢI...' : `TẢI CHO ${platformData[activePlatform as keyof typeof platformData].name}`}
+                  {isDownloading
+                    ? 'ĐANG TẢI...'
+                    : `TẢI CHO ${PLATFORM_META[activePlatform].name.toUpperCase()}`}
                 </Button>
 
                 {/* Additional Options */}
@@ -418,31 +605,35 @@ const DownloadPage = () => {
               >
                 <Tabs
                   activeKey={activePlatform}
-                  onChange={setActivePlatform}
-                  items={Object.entries(platformData).map(([key, platform]) => ({
-                    key,
-                    label: (
-                      <Space>
-                        {platform.icon}
-                        {platform.name}
-                      </Space>
-                    ),
-                    children: (
-                      <List
-                        dataSource={Object.entries(platform.requirements)}
-                        renderItem={([key, value]) => (
-                          <List.Item>
-                            <List.Item.Meta
-                              title={<Text strong style={{ color: '#8B0000' }}>
-                                {key.charAt(0).toUpperCase() + key.slice(1)}:
-                              </Text>}
-                              description={value}
-                            />
-                          </List.Item>
-                        )}
-                      />
-                    )
-                  }))}
+                  onChange={(key) => setActivePlatform(key as PlatformKey)}
+                  items={(Object.keys(PLATFORM_META) as PlatformKey[]).map((key) => {
+                    const meta = PLATFORM_META[key];
+
+                    return {
+                      key,
+                      label: (
+                        <Space>
+                          {meta.icon}
+                          {meta.name}
+                        </Space>
+                      ),
+                      children: (
+                        <List
+                          dataSource={Object.entries(meta.requirements)}
+                          renderItem={([reqKey, value]) => (
+                            <List.Item>
+                              <List.Item.Meta
+                                title={<Text strong style={{ color: '#8B0000' }}>
+                                  {reqKey.charAt(0).toUpperCase() + reqKey.slice(1)}:
+                                </Text>}
+                                description={value}
+                              />
+                            </List.Item>
+                          )}
+                        />
+                      )
+                    };
+                  })}
                 />
               </Card>
 

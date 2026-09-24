@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Modal, Radio, Space, Tag, Typography, Button, Card, ConfigProvider, message } from 'antd';
+import React, { useMemo, useState } from 'react';
+import { Modal, Radio, Space, Tag, Typography, Button, Card, ConfigProvider, Empty, Tooltip, message } from 'antd';
 import {
   LinuxOutlined,
   CheckCircleOutlined,
@@ -10,26 +10,29 @@ import {
 } from '@ant-design/icons';
 import type { RadioChangeEvent } from 'antd';
 import theme from '@/theme/themeConfig';
+import type { ReleaseFile } from '@/app/api/releases/route';
 
 const { Title, Text, Paragraph } = Typography;
 
-// Định nghĩa kiểu dữ liệu cho tùy chọn distro
+/** Distro dùng để tra cứu nhãn hiển thị. */
+export type DistroValue = 'arch' | 'deb' | 'rpm' | 'appimage';
+
 interface DistroOption {
   packageKey: string;
-  value: 'arch' | 'deb' | 'rpm';
+  value: DistroValue;
   label: string;
   description: string;
   icon: React.ReactNode;
   packageManager: string;
   color: string;
   badgeColor: string;
+  contentLength: number;
+  uploadTimestamp: number;
 }
 
-// Dữ liệu các tùy chọn
-const distroOptions: DistroOption[] = [
-  {
-    packageKey: 'linux/game-12-su-quan-1.0-1-x86_64.pkg.tar.zst',
-    value: 'arch',
+/** Nhãn + màu + icon theo từng định dạng gói. */
+const FORMAT_META: Record<DistroValue, Omit<DistroOption, 'packageKey' | 'value' | 'contentLength' | 'uploadTimestamp'>> = {
+  arch: {
     label: 'Arch Linux',
     description: 'Bản phát hành liên tục, gói mới nhất, hỗ trợ PKGBUILD & AUR',
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -42,9 +45,7 @@ const distroOptions: DistroOption[] = [
     color: '#1793D1',
     badgeColor: '#E8F4FD',
   },
-  {
-    packageKey: 'linux/game-12-su-quan-1.0-1.x86_64.rpm',
-    value: 'deb',
+  deb: {
     label: 'Debian / Ubuntu',
     description: 'Ổn định, kho lưu trữ khổng lồ, gói .deb, hệ sinh thái APT',
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -56,9 +57,7 @@ const distroOptions: DistroOption[] = [
     color: '#C60A3E',
     badgeColor: '#FEF0F3',
   },
-  {
-    packageKey: 'linux/game-12-su-quan.deb',
-    value: 'rpm',
+  rpm: {
     label: 'RHEL / Fedora',
     description: 'Cấp doanh nghiệp, gói .rpm, hệ sinh thái DNF/YUM',
     icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -71,13 +70,55 @@ const distroOptions: DistroOption[] = [
     color: '#2A6EBB',
     badgeColor: '#E8F0F9',
   },
-];
+  appimage: {
+    label: 'AppImage',
+    description: 'Chạy trên mọi distro, không cần cài đặt, chỉ cấp quyền thực thi',
+    icon: <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect x="4" y="4" width="16" height="16" rx="4" stroke="#6E4B9E" strokeWidth="1.5" fill="#6E4B9E" fillOpacity="0.15" />
+      <path d="M12 8V16M8 12H16" stroke="#6E4B9E" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>,
+    packageManager: 'chmod +x && ./game',
+    color: '#6E4B9E',
+    badgeColor: '#F1ECF9',
+  },
+};
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+  return `${(bytes / 1024 / 1024 / 1024).toFixed(2)} GB`;
+}
+
+/**
+ * Suy loại distro từ tên file B2.
+ *
+ * Bucket không có metadata distro — chỉ có tên file. Tên file thật có dạng
+ * game_12_suquan-arch-x86_64.pkg.tar.zst (distro nằm ở "arch") và
+ * game_12_suquan-linux-x64.deb (distro suy từ đuôi). Dùng if/else + includes
+ * để bắt cả hai trường hợp; đuôi file xét trước vì đặc thù hơn.
+ */
+function detectDistro(lower: string): DistroValue | null {
+  if (lower.endsWith(".appimage")) return "appimage";
+  if (lower.endsWith(".deb")) return "deb";
+  if (lower.endsWith(".rpm")) return "rpm";
+  if (lower.endsWith(".pkg.tar.zst")) return "arch";
+  if (lower.includes("arch")) return "arch";
+  if (lower.includes("debian") || lower.includes("ubuntu")) return "deb";
+  if (lower.includes("fedora") || lower.includes("rhel")) return "rpm";
+  return null;
+}
 
 interface DistroSelectorPopupProps {
   open: boolean;
   onClose: () => void;
-  onSelect?: (distro: 'arch' | 'deb' | 'rpm', packageKey: string) => void;
-  defaultSelected?: 'arch' | 'deb' | 'rpm';
+  onSelect?: (distro: DistroValue, packageKey: string) => void;
+  defaultSelected?: DistroValue;
+  /** File Linux thật lấy từ B2 (đã lọc os === "linux"). */
+  linuxFiles?: ReleaseFile[];
+  /** Tải một key: trang cha lo việc gọi /api/get-download-link. */
+  onDownload?: (packageKey: string) => void | Promise<void>;
+  downloading?: boolean;
 }
 
 const DistroSelectorPopup: React.FC<DistroSelectorPopupProps> = ({
@@ -85,80 +126,77 @@ const DistroSelectorPopup: React.FC<DistroSelectorPopupProps> = ({
   onClose,
   onSelect,
   defaultSelected = 'arch',
+  linuxFiles = [],
+  onDownload,
+  downloading = false,
 }) => {
-  const [selectedDistro, setSelectedDistro] = useState<'arch' | 'deb' | 'rpm'>(defaultSelected);
-  const [confirmed, setConfirmed] = useState(false);
-
-  const handleRadioChange = (e: RadioChangeEvent) => {
-    setSelectedDistro(e.target.value);
-    setConfirmed(false);
-  };
+  const [selectedDistro, setSelectedDistro] = useState<DistroValue>(defaultSelected);
 
   const [messageApi, contextHolder] = message.useMessage();
 
+  // Dựng danh sách lựa chọn từ file THẬT trên B2. Trước đây là hằng số
+  // distroOptions với key hardcode (linux/game-12-su-quan.deb) không tồn tại
+  // trên bucket nên bấm tải luôn 404.
+  const distroOptions: DistroOption[] = useMemo(() => {
+    const byDistro = new Map<DistroValue, ReleaseFile>();
+
+    for (const file of linuxFiles) {
+      const distro = detectDistro(file.fileName.toLowerCase());
+
+      if (!distro) continue;
+
+      // Giữ file mới nhất cho mỗi distro.
+      const existing = byDistro.get(distro);
+
+      if (!existing || file.uploadTimestamp > existing.uploadTimestamp) {
+        byDistro.set(distro, file);
+      }
+    }
+
+    const order: DistroValue[] = ['arch', 'deb', 'rpm', 'appimage'];
+
+    return order
+      .filter((distro) => byDistro.has(distro))
+      .map((distro) => {
+        const file = byDistro.get(distro)!;
+
+        return {
+          ...FORMAT_META[distro],
+          value: distro,
+          packageKey: file.fileName,
+          contentLength: file.contentLength,
+          uploadTimestamp: file.uploadTimestamp,
+        };
+      });
+  }, [linuxFiles]);
+
+  const handleRadioChange = (e: RadioChangeEvent) => {
+    setSelectedDistro(e.target.value);
+  };
+
+  const selectedOption = distroOptions.find((opt) => opt.value === selectedDistro) ?? null;
+
   const handleConfirm = async () => {
-    const selectedOption = distroOptions.find(
-      (opt) => opt.value === selectedDistro
-    );
+    if (!selectedOption) {
+      messageApi.warning({ content: "Vui lòng chọn một dòng phân phối", key: "download" });
+      return;
+    }
 
-    if (!selectedOption) return;
+    messageApi.success({
+      content: `Đã chọn: ${selectedOption.label}`,
+      key: "download",
+      duration: 2,
+    });
 
-    try {
-      messageApi.loading({
-        content: "Đang chuẩn bị file tải...",
-        key: "download",
-      });
+    if (onSelect) {
+      onSelect(selectedOption.value, selectedOption.packageKey);
+    }
 
-      const res = await fetch(
-        `/api/get-download-link?key=${encodeURIComponent(selectedOption.packageKey)}`
-      );
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch download url");
-      }
-
-      const { url } = await res.json();
-
-      messageApi.success({
-        content: `Đã chọn: ${selectedOption.label}`,
-        key: "download",
-        duration: 2,
-      });
-
-      setConfirmed(true);
-
-      if (onSelect) {
-        onSelect(selectedDistro, selectedOption.packageKey);
-      }
-
-      // trigger browser download
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      // đóng popup sau khi trigger download
-      setTimeout(() => {
-        onClose();
-      }, 1000);
-    } catch (error) {
-      console.error(error);
-
-      messageApi.error({
-        content: "Không thể bắt đầu tải file",
-        key: "download",
-        duration: 3,
-      });
+    // Trang cha tạo link mới rồi trigger download.
+    if (onDownload) {
+      await onDownload(selectedOption.packageKey);
     }
   };
-
-  const getSelectedOption = () => {
-    return distroOptions.find(opt => opt.value === selectedDistro);
-  };
-
-  const selectedOption = getSelectedOption();
 
   return (
     <ConfigProvider theme={theme}>
@@ -223,7 +261,7 @@ const DistroSelectorPopup: React.FC<DistroSelectorPopupProps> = ({
               fontFamily: 'monospace',
             }}
           >
-            v2.5.0
+            {distroOptions.length} gói
           </Tag>
         </div>
 
@@ -332,7 +370,7 @@ const DistroSelectorPopup: React.FC<DistroSelectorPopupProps> = ({
           </Radio.Group>
 
           {/* Thông tin gói đã chọn */}
-          {selectedOption && confirmed && (
+          {selectedOption && (
             <Card
               size="small"
               style={{
